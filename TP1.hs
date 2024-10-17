@@ -1,5 +1,5 @@
 import qualified Data.List
-import Data.List (nub)
+import Data.List (groupBy, sortOn, nub, maximumBy)
 import qualified Data.Array
 import qualified Data.Bits
 
@@ -13,46 +13,71 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
 
+--helper functions
+-- used in rome
+inDegree :: RoadMap -> City -> Int
+inDegree roadMap c = length [(c1, c2) | (c1, c2, _) <- roadMap, c1 == c || c2 == c]
+-- used in isStronglyConnected
+-- uses adjacentCities
+dfs :: RoadMap -> City -> [City] -> [City]
+dfs roadMap city visited 
+    | city `elem` visited = visited
+    | otherwise = foldl (\acc nextCity -> dfs roadMap nextCity acc) (city:visited) adjacentCities
+        where
+            adjacentCities = map fst (adjacent roadMap city)
+
+
+--1
 cities :: RoadMap -> [City]
 cities roadMap = nub [city | (city1, city2, _) <- roadMap, city <- [city1, city2]]
 
+--2
 -- go through each tuple checking if the cities are the ones we're looking for
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent roadMap city1 city2 =
     any (\(cityA, cityB, _) -> (city1 == cityA && city2 == cityB) || (city1 == cityB && city2 == cityA)) roadMap    
 
--- recursively check each tuple to find both cities, and return associated distance
---distance :: RoadMap -> City -> City -> Maybe Distance
---distance roadMap cityA cityB =
---   case lookupDist roadMap cityA cityB of
---        Just d -> Just d
---        Nothing -> lookupDist roadMap cityB cityA
---    where
---        lookupDist :: RoadMap -> City -> City -> Maybe Distance
---        lookupDist [] _ _ = Nothing
---        lookupDist ((c1, c2, dist):rest) city1 city2
---            | city1 == c1 && city2 == c2 = Just d
---            | otherwise                  = lookupDist rest city1 city2
+--3
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance roadMap city1 city2 = 
     case [(d) | (c1, c2, d) <- roadMap, (c1 == city1 && c2 == city2) || (c1 == city2 && c2 == city1)] of
         [d] -> Just d
         _   -> Nothing
 
-
+--4
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent roadMap city = [(c2, d) | (c1, c2, d) <- roadMap, c1 == city] ++ [(c1, d) | (c1, c2, d) <-roadMap, c2 == city]
 
-
+--5
+-- uses distance
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance _ [] = Just 0
+pathDistance _ [_] = Just 0
+pathDistance roadMap (c1:c2:cs) =
+    case distance roadMap c1 c2 of
+        Just d -> case pathDistance roadMap (c2:cs) of
+                    Just rest -> Just (d + rest)
+                    Nothing -> Nothing
+        Nothing -> Nothing
 
+--6
+-- uses inDegree and cities
 rome :: RoadMap -> [City]
-rome = undefined
+rome roadMap = [c | (c, degree) <- degrees, degree == maxDegree]
+    where 
+        allCities = cities roadMap
+        degrees = [(city, inDegree roadMap city) | city <- allCities]
+        maxDegree = maximum (map snd degrees)
 
+--7
+-- uses dfs and cities
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected roadMap = length visitedFromFirst == length allCities
+    where
+        allCities = cities roadMap
+        visitedFromFirst = dfs roadMap (head allCities) []
 
+--8
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
 
