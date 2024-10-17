@@ -1,4 +1,4 @@
-# PFL - Haskell Coursework - TP1
+# PFL - Haskell Coursework
 
 ## Group T05_G03
 
