@@ -1,5 +1,5 @@
 import qualified Data.List
-import Data.List (groupBy, sortOn, nub, maximumBy)
+import Data.List (groupBy, sortOn, nub, maximumBy, permutations, minimumBy)
 import qualified Data.Array
 import qualified Data.Bits
 
@@ -115,8 +115,37 @@ shortestPath roadMap start end
                         Just d -> d
                         Nothing -> maxBound :: Int -- We set the value too high for invalid paths
 
+--9
+-- Solution to the Traveling Salesman Problem (TSP)
 travelSales :: RoadMap -> Path
-travelSales = undefined
+travelSales roadMap
+    | null allCities = []  -- If there are no cities, returns an empty list
+    | otherwise = case validPaths of
+                    [] -> []  -- If there are no valid paths, returns an empty list
+                    _  -> minimumBy comparePaths validPaths  -- Returns the path with the shortest total distance
+  where
+    allCities = cities roadMap  -- Get all cities
+    startingCity = head allCities  -- We chose the first city as a starting point
+    possibleRoutes = map (\perm -> startingCity : perm ++ [startingCity]) (permutations (tail allCities))  -- Generates all possible routes (permutations of cities)
+    
+    -- Filters only valid paths (those where all cities are connected)
+    validPaths = filter (isValidRoute roadMap) possibleRoutes
+
+    -- Function to compare two paths by their total length
+    comparePaths :: Path -> Path -> Ordering
+    comparePaths p1 p2 = compare (totalDistance p1) (totalDistance p2)
+
+    -- Calculates the total distance of a path
+    totalDistance :: Path -> Distance
+    totalDistance path = case pathDistance roadMap path of
+                           Just d -> d
+                           Nothing -> maxBound  -- Invalid paths will have a maximum distance
+
+-- Checks if a route is valid (all cities are connected)
+isValidRoute :: RoadMap -> Path -> Bool
+isValidRoute roadMap path = case pathDistance roadMap path of
+                              Just _ -> True
+                              Nothing -> False
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
@@ -130,3 +159,9 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 gTest3 = [("0","1",4),("2","3",2)]
+
+testTravelSales1 = travelSales gTest1
+
+testTravelSales2 = travelSales gTest2
+
+testTravelSales3 = travelSales gTest3
