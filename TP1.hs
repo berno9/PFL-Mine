@@ -78,8 +78,42 @@ isStronglyConnected roadMap = length visitedFromFirst == length allCities
         visitedFromFirst = dfs roadMap (head allCities) []
 
 --8
+-- Uses BFS to find all shortest paths between two cities
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+shortestPath roadMap start end
+    | start == end = [[start]]  -- If the origin and destination cities are the same, the shortest route is to the city itself
+    | otherwise = bfs [[start]] [] -- We use BFS from the city of origin
+  where
+    -- BFS helper function to explore paths
+    bfs :: [Path] -> [Path] -> [Path]
+    bfs [] foundPaths = foundPaths  -- When the queue is empty, we finish and return the found paths
+    bfs (path:queue) foundPaths
+        | currentCity == end =
+            -- If we reach the destination, we add the current path to the list of found paths
+            bfs queue (addPath foundPaths path)
+        | otherwise =
+            -- Otherwise, we continue to explore adjacent paths
+            let newPaths = [path ++ [nextCity] | (nextCity, _) <- adjacent roadMap currentCity,
+                                                nextCity `notElem` path] -- We add the next city to the current path
+                extendedQueue = queue ++ newPaths -- We added the new paths to the queue
+                sortedQueue = sortOn pathLength extendedQueue -- We order the queue by the paths with the shortest distance
+            in bfs sortedQueue foundPaths
+      where
+        currentCity = last path  -- The current city is the last element of the current path
+
+    -- Helper function to add a path to the list of found paths, keeping only the shortest ones
+    addPath :: [Path] -> Path -> [Path]
+    addPath [] newPath = [newPath] -- If the path list is empty, we add the new path
+    addPath foundPaths newPath
+        | pathLength newPath < pathLength (head foundPaths) = [newPath]  -- If the new path is shorter, we discard the previous ones
+        | pathLength newPath == pathLength (head foundPaths) = newPath : foundPaths -- If it is the same length, we add
+        | otherwise = foundPaths  -- Otherwise, we keep the paths already found
+
+    -- Helper function to calculate the length of a path
+    pathLength :: Path -> Distance
+    pathLength path = case pathDistance roadMap path of
+                        Just d -> d
+                        Nothing -> maxBound :: Int -- We set the value too high for invalid paths
 
 travelSales :: RoadMap -> Path
 travelSales = undefined
