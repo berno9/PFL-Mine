@@ -11,8 +11,8 @@
 
 | Name                              | Percentage | Tasks Performed |
 |----------------------------------- |------------|-----------------|
-| Bernardo Marques Soares da Costa   | %        | Implemented functions 1 to 7. Worked on the initial structure of the code and developed the graph manipulation functionalities, such as listing cities, checking adjacency, calculating distances, and checking the graph’s connectivity. |
-| Lara Inês Alves Cunha              | %        | Implemented functions 8 and 9. Focused on developing the shortest path functionality (`shortestPath`) and solving the Traveling Salesman Problem (`travelSales`). Also responsible for writing the `README.md` file. |
+| Bernardo Marques Soares da Costa   | 50%        | Implemented functions 1 to 7. Worked on the initial structure of the code and developed the graph manipulation functionalities, such as listing cities, checking adjacency, calculating distances, and checking the graph’s connectivity. |
+| Lara Inês Alves Cunha              | 50%        | Implemented functions 8 and 9. Focused on developing the shortest path functionality (`shortestPath`) and solving the Traveling Salesman Problem (`travelSales`). Also responsible for writing the README.md file. |
 
 ### Description of Implemented Functions
 

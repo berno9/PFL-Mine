@@ -14,18 +14,23 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 --1
--- Takes a road map as an argument and produces all cities in it, using list comprehension
+-- Takes a road map as an argument 
+-- Produces all cities in it, using list comprehension
 cities :: RoadMap -> [City]
 cities roadMap = nub [city | (city1, city2, _) <- roadMap, city <- [city1, city2]]
 
 --2
+-- Takes in a road map and two cities
 -- Goes through each tuple in the road map checking if the cities are the ones we're looking for
+-- If they are on the same tuple, they are adjacent
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent roadMap city1 city2 =
     any (\(cityA, cityB, _) -> (city1 == cityA && city2 == cityB) || (city1 == cityB && city2 == cityA)) roadMap    
 
 --3
+-- Takes in a road map and two cities
 -- Using list comprehension, extracts distance if an edge between two cities is found
+-- in other words, if a tuple with the two cities exists, extract distance
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance roadMap city1 city2 = 
     case [(d) | (c1, c2, d) <- roadMap, (c1 == city1 && c2 == city2) || (c1 == city2 && c2 == city1)] of
@@ -33,11 +38,15 @@ distance roadMap city1 city2 =
         _   -> Nothing
 
 --4
+-- Takes in a road map and a city
+-- Finds all tuples where the desired city appears
 -- Joins two list comprehensions of adjacent cities, due to bidirectional nature of the road map
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent roadMap city = [(c2, d) | (c1, c2, d) <- roadMap, c1 == city] ++ [(c1, d) | (c1, c2, d) <-roadMap, c2 == city]
 
 --5
+-- Takes in a road map and a list of cities
+-- Recursively traverses each tuple
 -- Using the distance function, adds distance between each two cities in the path
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance _ [] = Just 0
@@ -54,7 +63,10 @@ pathDistance roadMap (c1:c2:cs) =
 -- count the number of tuples the desired city appears
 inDegree :: RoadMap -> City -> Int
 inDegree roadMap c = length [(c1, c2) | (c1, c2, _) <- roadMap, c1 == c || c2 == c]
--- using inDegree, calculate the highest degree and find cities with that degree
+-- using cities, extract all cities
+-- using inDegree, calculate all cities degrees
+-- extract highest degree
+-- traverse the degrees list and find cities with the highest degree
 rome :: RoadMap -> [City]
 rome roadMap = [c | (c, degree) <- degrees, degree == maxDegree]
     where 
@@ -64,15 +76,20 @@ rome roadMap = [c | (c, degree) <- degrees, degree == maxDegree]
 
 --7
 -- Depth first search
--- takes in a road map, a starting point and a list of visited cities
---
+-- Takes in a road map, a starting point and a list of visited cities
+-- If a city is on the visited list, return that list (the search is over)
+-- If not, extract all adjacent cities to the current one
+-- and add it to the visited list
 dfs :: RoadMap -> City -> [City] -> [City]
 dfs roadMap city visited 
-    | city `elem` visited = visited  -- city already visited
+    | city `elem` visited = visited  
     | otherwise = foldl (\acc nextCity -> dfs roadMap nextCity acc) (city:visited) adjacentCities
         where
             adjacentCities = map fst (adjacent roadMap city)
--- uses dfs and cities
+-- Takes in a road map
+-- Extracts all cities
+-- And performs a dfs, returning all visited cities
+-- Then, returns true if the number of visited cities is the same as the total number of cities
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected roadMap = length visitedFromFirst == length allCities
     where
@@ -80,13 +97,26 @@ isStronglyConnected roadMap = length visitedFromFirst == length allCities
         visitedFromFirst = dfs roadMap (head allCities) []
 
 --8
--- Uses BFS to find all shortest paths between two cities
+-- shortestPath :: RoadMap -> City -> City -> [Path]
+-- Uses BFS to find all shortest paths between two cities.
+-- Arguments:
+--   roadMap - A RoadMap representing the network of cities and distances between them.
+--   start - The starting city.
+--   end - The destination city.
+-- Returns:
+--   A list of all possible shortest paths (lists of cities) from the start city to the end city.
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath roadMap start end
     | start == end = [[start]]  -- If the origin and destination cities are the same, the shortest route is to the city itself
     | otherwise = bfs [[start]] [] -- We use BFS from the city of origin
   where
     -- BFS helper function to explore paths
+    -- bfs :: [Path] -> [Path] -> [Path]
+    -- Arguments:
+    --   queue - A list of paths that need to be explored.
+    --   foundPaths - A list of paths that have reached the destination.
+    -- Returns:
+    --   An updated list of found paths that reach the destination.
     bfs :: [Path] -> [Path] -> [Path]
     bfs [] foundPaths = foundPaths  -- When the queue is empty, we finish and return the found paths
     bfs (path:queue) foundPaths
@@ -103,7 +133,13 @@ shortestPath roadMap start end
       where
         currentCity = last path  -- The current city is the last element of the current path
 
-    -- Helper function to add a path to the list of found paths, keeping only the shortest ones
+    -- addPath :: [Path] -> Path -> [Path]
+    -- Helper function to add a path to the list of found paths, keeping only the shortest ones.
+    -- Arguments:
+    --   foundPaths - A list of already found shortest paths.
+    --   newPath - The path that we are adding if it has the shortest distance.
+    -- Returns:
+    --   An updated list of shortest paths.
     addPath :: [Path] -> Path -> [Path]
     addPath [] newPath = [newPath] -- If the path list is empty, we add the new path
     addPath foundPaths newPath
@@ -111,14 +147,24 @@ shortestPath roadMap start end
         | pathLength newPath == pathLength (head foundPaths) = newPath : foundPaths -- If it is the same length, we add
         | otherwise = foundPaths  -- Otherwise, we keep the paths already found
 
-    -- Helper function to calculate the length of a path
+    -- pathLength :: Path -> Distance
+    -- Helper function to calculate the length of a path.
+    -- Arguments:
+    --   path - The path whose length is being calculated.
+    -- Returns:
+    --   The total distance of the path as a Distance.
     pathLength :: Path -> Distance
     pathLength path = case pathDistance roadMap path of
                         Just d -> d
                         Nothing -> maxBound :: Int -- We set the value too high for invalid paths
 
 --9
--- Solution to the Traveling Salesman Problem (TSP)
+-- travelSales :: RoadMap -> Path
+-- Solves the Traveling Salesman Problem (TSP) by finding the shortest path that visits all cities exactly once and returns to the starting city.
+-- Arguments:
+--   roadMap - A RoadMap representing the network of cities and distances between them.
+-- Returns:
+--   A path representing the shortest possible route that visits each city exactly once and returns to the starting city, or an empty list if no such path exists.
 travelSales :: RoadMap -> Path
 travelSales roadMap
     | null allCities = []  -- If there are no cities, returns an empty list
@@ -130,20 +176,37 @@ travelSales roadMap
     startingCity = head allCities  -- We chose the first city as a starting point
     possibleRoutes = map (\perm -> startingCity : perm ++ [startingCity]) (permutations (tail allCities))  -- Generates all possible routes (permutations of cities)
     
-    -- Filters only valid paths (those where all cities are connected)
+    -- validPaths :: [Path]
+    -- Filters only valid paths (those where all cities are connected).
     validPaths = filter (isValidRoute roadMap) possibleRoutes
 
-    -- Function to compare two paths by their total length
+    -- comparePaths :: Path -> Path -> Ordering
+    -- Function to compare two paths by their total length.
+    -- Arguments:
+    --   p1, p2 - Paths to be compared based on their distances.
+    -- Returns:
+    --   The ordering based on the total distances of p1 and p2.
     comparePaths :: Path -> Path -> Ordering
     comparePaths p1 p2 = compare (totalDistance p1) (totalDistance p2)
 
-    -- Calculates the total distance of a path
+    -- totalDistance :: Path -> Distance
+    -- Calculates the total distance of a path.
+    -- Arguments:
+    --   path - The path whose total distance is being calculated.
+    -- Returns:
+    --   The total distance of the path, or a maximum bound if the path is invalid.
     totalDistance :: Path -> Distance
     totalDistance path = case pathDistance roadMap path of
                            Just d -> d
                            Nothing -> maxBound  -- Invalid paths will have a maximum distance
 
--- Checks if a route is valid (all cities are connected)
+-- isValidRoute :: RoadMap -> Path -> Bool
+-- Checks if a route is valid (all cities are connected).
+-- Arguments:
+--   roadMap - A RoadMap representing the network of cities and distances between them.
+--   path - The path being checked for connectivity.
+-- Returns:
+--   True if the route is valid (all cities are connected), False otherwise.
 isValidRoute :: RoadMap -> Path -> Bool
 isValidRoute roadMap path = case pathDistance roadMap path of
                               Just _ -> True
