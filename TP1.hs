@@ -13,31 +13,19 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
 
---helper functions
--- used in rome
-inDegree :: RoadMap -> City -> Int
-inDegree roadMap c = length [(c1, c2) | (c1, c2, _) <- roadMap, c1 == c || c2 == c]
--- used in isStronglyConnected
--- uses adjacentCities
-dfs :: RoadMap -> City -> [City] -> [City]
-dfs roadMap city visited 
-    | city `elem` visited = visited
-    | otherwise = foldl (\acc nextCity -> dfs roadMap nextCity acc) (city:visited) adjacentCities
-        where
-            adjacentCities = map fst (adjacent roadMap city)
-
-
 --1
+-- Takes a road map as an argument and produces all cities in it, using list comprehension
 cities :: RoadMap -> [City]
 cities roadMap = nub [city | (city1, city2, _) <- roadMap, city <- [city1, city2]]
 
 --2
--- go through each tuple checking if the cities are the ones we're looking for
+-- Goes through each tuple in the road map checking if the cities are the ones we're looking for
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent roadMap city1 city2 =
     any (\(cityA, cityB, _) -> (city1 == cityA && city2 == cityB) || (city1 == cityB && city2 == cityA)) roadMap    
 
 --3
+-- Using list comprehension, extracts distance if an edge between two cities is found
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance roadMap city1 city2 = 
     case [(d) | (c1, c2, d) <- roadMap, (c1 == city1 && c2 == city2) || (c1 == city2 && c2 == city1)] of
@@ -45,11 +33,12 @@ distance roadMap city1 city2 =
         _   -> Nothing
 
 --4
+-- Joins two list comprehensions of adjacent cities, due to bidirectional nature of the road map
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent roadMap city = [(c2, d) | (c1, c2, d) <- roadMap, c1 == city] ++ [(c1, d) | (c1, c2, d) <-roadMap, c2 == city]
 
 --5
--- uses distance
+-- Using the distance function, adds distance between each two cities in the path
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance _ [] = Just 0
 pathDistance _ [_] = Just 0
@@ -61,15 +50,28 @@ pathDistance roadMap (c1:c2:cs) =
         Nothing -> Nothing
 
 --6
--- uses inDegree and cities
+-- the degree is the number of cities one city is connected to
+-- count the number of tuples the desired city appears
+inDegree :: RoadMap -> City -> Int
+inDegree roadMap c = length [(c1, c2) | (c1, c2, _) <- roadMap, c1 == c || c2 == c]
+-- using inDegree, calculate the highest degree and find cities with that degree
 rome :: RoadMap -> [City]
 rome roadMap = [c | (c, degree) <- degrees, degree == maxDegree]
     where 
         allCities = cities roadMap
         degrees = [(city, inDegree roadMap city) | city <- allCities]
-        maxDegree = maximum (map snd degrees)
+        maxDegree = maximum (map snd degrees) -- highest of all second elements of (city, its degree) tuples
 
 --7
+-- Depth first search
+-- takes in a road map, a starting point and a list of visited cities
+--
+dfs :: RoadMap -> City -> [City] -> [City]
+dfs roadMap city visited 
+    | city `elem` visited = visited  -- city already visited
+    | otherwise = foldl (\acc nextCity -> dfs roadMap nextCity acc) (city:visited) adjacentCities
+        where
+            adjacentCities = map fst (adjacent roadMap city)
 -- uses dfs and cities
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected roadMap = length visitedFromFirst == length allCities
