@@ -168,9 +168,19 @@ print_row([Cell | Rest]) :-
 
 % move(+GameState, +Move, -NewGameState)
 % Executa um movimento, validando se é permitido e retorna o novo estado do jogo.
-move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
+/*move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
     valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
     execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
+    next_player(CurrentPlayer, NextPlayer).*/
+
+move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
+    % Validação do movimento
+    valid_moves(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
+
+    % Execução do movimento no tabuleiro
+    execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
+
+    % Alternar o jogador
     next_player(CurrentPlayer, NextPlayer).
 
 
@@ -182,7 +192,7 @@ next_player(blue, red).
 % Validação de movimento
 % valid_move(+Board, +Player, +Move)
 % Verifica se o movimento é válido para o jogador atual.
-valid_move(Board, Player, move(SRow, SCol, TRow, TCol)) :-
+/*valid_moves(Board, Player, move(SRow, SCol, TRow, TCol)) :-
     nth1(SRow, Board, SourceRow),
     nth1(SCol, SourceRow, Stack),
     stack_owner(Stack, Player),
@@ -193,8 +203,20 @@ valid_move(Board, Player, move(SRow, SCol, TRow, TCol)) :-
     valid_destination(Stack, TargetCell),
     write('Destino aprovado: '), write(TargetCell), nl,
     valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell),
-    write('Tipo de movimento valido.'), nl.
+    write('Tipo de movimento valido.'), nl.*/
 
+valid_moves(Board, Player, move(SRow, SCol, TRow, TCol)) :-
+    nth1(SRow, Board, SourceRow),
+    nth1(SCol, SourceRow, Stack),  % `Stack` usado corretamente aqui
+    stack_owner(Stack, Player),  % Garante que pertence ao jogador
+    write('Origem válida: '), write(Stack), nl,  % Debug para verificar `Stack`
+    nth1(TRow, Board, TargetRow),
+    nth1(TCol, TargetRow, TargetCell),  % Aqui `TargetCell` também é usado
+    write('Destino valido: '), write(TargetCell), nl,
+    valid_destination(Stack, TargetCell),
+    write('Destino aprovado: '), write(TargetCell), nl,
+    valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell),
+    write('Tipo de movimento valido.'), nl.
 
 
 % Identifica o dono de uma pilha
@@ -279,7 +301,6 @@ determine_new_stack(Stack, _, Stack).  % Para um movimento posicional.
 determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2.  % Empilhamento.
 determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2.
 determine_new_stack(_, _, _).  % Outros casos podem ser adicionados, se necessário.
-
 
 % Atualiza uma célula do tabuleiro
 % update_board(+Board, +Row, +Col, +NewValue, -NewBoard)
