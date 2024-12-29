@@ -1,4 +1,29 @@
 % game.pl
+% Predicado principal para iniciar o jogo
+% play/0
+% Inicia o menu principal do jogo e permite configurar e começar a partida.
+play :-
+    write('Bem-vindo ao Anaash!'), nl,
+    write('1. Iniciar jogo'), nl,
+    write('2. Sair'), nl,
+    write('Escolha uma opcao: '),
+    read(Choice),
+    handle_choice(Choice).
+
+% Tratamento da escolha no menu
+% handle_choice(+Choice)
+% Processa a escolha do menu inicial.
+handle_choice(1) :-
+    write('Configurando o jogo...'), nl,
+    initial_state([size(6), player_names('Alice', 'Bob')], GameState),
+    game_loop(GameState). % Inicia o ciclo principal do jogo
+
+handle_choice(2) :-
+    write('Saindo do jogo. Até logo!'), nl.
+
+handle_choice(_) :-
+    write('Opção inválida! Tente novamente.'), nl,
+    play.
 
 % Predicado inicial do estado do jogo
 % initial_state(+GameConfig, -GameState)
@@ -45,56 +70,17 @@ alternating_pattern([], _, _).
 alternating_pattern([X | Rest], X, Y) :-
     alternating_pattern(Rest, Y, X).
 
-% Predicado principal para iniciar o jogo
-% play/0
-% Inicia o menu principal do jogo e permite configurar e começar a partida.
-play :-
-    write('Bem-vindo ao Anaash!'), nl,
-    write('1. Iniciar jogo'), nl,
-    write('2. Sair'), nl,
-    write('Escolha uma opcao: '),
-    read(Choice),
-    handle_choice(Choice).
-
-% Tratamento da escolha no menu
-% handle_choice(+Choice)
-% Processa a escolha do menu inicial.
-handle_choice(1) :-
-    write('Configurando o jogo...'), nl,
-    initial_state([size(6), player_names('Alice', 'Bob')], GameState),
-    game_loop(GameState).  % Inicia o ciclo principal do jogo
-
-handle_choice(2) :-
-    write('Saindo do jogo. Até logo!'), nl.
-
-handle_choice(_) :-
-    write('Opção inválida! Tente novamente.'), nl,
-    play.
-
-% Ciclo principal do jogo
-% game_loop(+GameState)
-% Permite movimentos iterativos entre os jogadores até o fim do jogo.
-/*game_loop(GameState) :-
-    display_game(GameState),
-    GameState = game_state(_, CurrentPlayer, _),
-    write('Jogador '), write(CurrentPlayer), write(', faça um movimento.'), nl,
-    interactive_move(GameState, NewGameState),  % Jogador faz o movimento
-    (game_over(NewGameState, Winner) ->  % Verifica se o jogo acabou
-        write('O jogo terminou! Vencedor: '), write(Winner), nl
-    ;
-        game_loop(NewGameState)  % Continua o jogo
-    ).*/
+%%%
 
 game_loop(GameState) :-
     GameState = game_state(_, CurrentPlayer, _),
     write('Jogador '), write(CurrentPlayer), write(', faz um movimento.'), nl,
-    interactive_move(GameState, NewGameState),  % Jogador faz o movimento
-    (game_over(NewGameState, Winner) ->  % Verifica se o jogo acabou
+    interactive_move(GameState, NewGameState), 
+    (game_over(NewGameState, Winner) -> 
         write('O jogo terminou! Vencedor: '), write(Winner), nl
     ;
-        game_loop(NewGameState)  % Continua o jogo
+        game_loop(NewGameState)  
     ).
-
 
 % Verifica se o jogo terminou
 % game_over(+GameState, -Winner)
@@ -104,7 +90,7 @@ game_over(game_state(Board, _, config(_, _, red(_)-blue(_))), Winner) :-
     count_pieces(Board, blue, RemainingBlue),
     (RemainingRed =:= 0 -> Winner = blue ;
      RemainingBlue =:= 0 -> Winner = red ;
-     fail).  % O jogo ainda não terminou
+     fail).  
 
 % Conta as peças restantes de um jogador
 % count_pieces(+Board, +Player, -Count)
@@ -112,12 +98,12 @@ game_over(game_state(Board, _, config(_, _, red(_)-blue(_))), Winner) :-
 % count_pieces(+Board, +Player, -Count)
 count_pieces(Board, Player, Count) :-
     findall(Stack, (member(Row, Board), member(Stack, Row), stack_owner(Stack, Player)), Stacks),
-    apply_stack_height(Stacks, Heights),  % Substitui maplist/3
+    apply_stack_height(Stacks, Heights),  
     sum_list(Heights, Count).
 
 % sum_list(+List, -Sum)
 % Soma todos os elementos de uma lista.
-sum_list([], 0).  % A soma de uma lista vazia é 0.
+sum_list([], 0). 
 sum_list([Head | Tail], Sum) :-
     sum_list(Tail, PartialSum),
     Sum is Head + PartialSum.
@@ -128,6 +114,27 @@ apply_stack_height([Stack | RestStacks], [Height | RestHeights]) :-
     stack_height(Stack, Height),
     apply_stack_height(RestStacks, RestHeights).
 
+% Obtém a altura de uma pilha
+% stack_height(+Stack, -Height)
+stack_height(red(H), H).
+stack_height(blue(H), H).
+
+is_empty([]).
+
+interactive_move(GameState, NewGameState) :-
+    display_game(GameState),
+    write('Insira a linha de origem: '), read(SRow),
+    write('Insira a coluna de origem: '), read(SCol),
+    write('Insira a linha de destino: '), read(TRow),
+    write('Insira a coluna de destino: '), read(TCol),
+    (move(GameState, move(SRow, SCol, TRow, TCol), NewGameState) ->
+        true 
+    ;
+        write('Movimento invalido, tente novamente.'), nl,
+        interactive_move(GameState, NewGameState)  
+    ).
+
+%%%
 
 % Exibição do estado atual do jogo
 % display_game(+GameState)
@@ -136,9 +143,9 @@ display_game(game_state(Board, Player, Config)) :-
     write('Jogador atual: '), write(Player), nl,
     write('Tabuleiro:'), nl,
     display_board(Board),
-    write('Detalhes da configuracao: '), write(Config), nl,
-    value(game_state(Board, Player, Config), Player, Value),
-    write('Vantagem: '), write(Value), nl.
+    write('Detalhes da configuracao: '), write(Config), nl.
+    %value(game_state(Board, Player, Config), Player, Value),
+    %write('Vantagem: '), write(Value), nl.
 
 % Exibição do tabuleiro
 % display_board(+Board)
@@ -146,7 +153,7 @@ display_game(game_state(Board, Player, Config)) :-
 display_board([]).
 display_board([Row | Rest]) :-
     print_row(Row),
-    nl,  % Pula para a próxima linha
+    nl,  
     display_board(Rest).
 
 display_moves([]).
@@ -159,60 +166,181 @@ display_moves([Move | Rest]) :-
 % Imprime os elementos de uma linha separados por espaços.
 print_row([]).
 print_row([Cell | Rest]) :-
-    format('~w ', [Cell]),  % Imprime a célula com um espaço
+    format('~w ', [Cell]), 
     print_row(Rest).
 
-% move(+GameState, +Move, -NewGameState)
-% Executa um movimento, validando se é permitido e retorna o novo estado do jogo.
-/*move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
-    write('Movimento solicitado: '), write(move(SRow, SCol, TRow, TCol)), nl,
-    write('Tabuleiro antes do movimento:'), nl, display_board(Board),
-    valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
-    execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
-    next_player(CurrentPlayer, NextPlayer),
-    write('Tabuleiro após o movimento:'), nl, display_board(NewBoard).
-*/
 
-% move(+GameState, +Move, -NewGameState)
-% Executa um movimento, validando se é permitido e retorna o novo estado do jogo.
-/*move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
-    valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
-    execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
-    next_player(CurrentPlayer, NextPlayer).*/
+%%%
 
 move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, Config)) :-
     % Geração de todos os movimentos válidos
     valid_moves(game_state(Board, CurrentPlayer, Config), ListOfMoves), 
     % Verificar se a jogada atual está nessa lista
-    member(Move, ListOfMoves),
+    member(Move, ListOfMoves), 
     % Execução do movimento no tabuleiro
-    execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
+    execute_move(Board, Move, NewBoard), 
     % Alternar o jogador
-    next_player(CurrentPlayer, NextPlayer).
-
+    next_player(CurrentPlayer, NextPlayer). 
 
 % Alterna o jogador atual
 % next_player(+CurrentPlayer, -NextPlayer)
 next_player(red, blue).
 next_player(blue, red).
 
-% Validação de movimento
-% valid_move(+Board, +Player, +Move)
-% Verifica se o movimento é válido para o jogador atual.
-/*valid_moves(Board, Player, move(SRow, SCol, TRow, TCol)) :-
+%% valid_moves
+valid_moves(game_state(Board, _, _), []) :-
+    is_empty(Board), !. 
+valid_moves(game_state(Board, CurrentPlayer, Config), Moves) :-
+    setof(
+        move(SRow, SCol, TRow, TCol),
+        valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
+        Moves
+    ).
+
+valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)) :-
+    length(Board, Size), 
+    between(1, Size, SRow), 
+    between(1, Size, SCol), 
+    within_bounds(Board, SRow, SCol), 
     nth1(SRow, Board, SourceRow),
     nth1(SCol, SourceRow, Stack),
-    stack_owner(Stack, Player),
-    write('Origem válida: '), write(Stack), nl,
-    nth1(TRow, Board, TargetRow),
-    nth1(TCol, TargetRow, TargetCell),
-    write('Destino valido: '), write(TargetCell), nl,
-    valid_destination(Stack, TargetCell),
-    write('Destino aprovado: '), write(TargetCell), nl,
-    valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell),
-    write('Tipo de movimento valido.'), nl.*/
+    stack_owner(Stack, CurrentPlayer), 
+    between(1, Size, TRow), 
+    between(1, Size, TCol), 
+    valid_destination(Board, SRow, SCol, TRow, TCol). 
 
 between(Low, High, Low) :- 
+    Low =< High.
+between(Low, High, X) :-
+    Low < High,
+    NextLow is Low + 1,
+    between(NextLow, High, X).
+
+within_bounds(Board, Row, Col) :-
+    nonvar(Row), nonvar(Col),
+    length(Board, Size),
+    Row > 0, Row =< Size,
+    Col > 0, Col =< Size.
+
+stack_owner(Stack, Player) :-
+    Stack =.. [Player|_]. % Example: red(1), blue(2).
+
+% nth1(+Index, +List, -Element)
+% Retorna o Elemento na posição Index (1-based) da Lista.
+nth1(1, [Element | _], Element).  % Caso base: o índice é 1.
+nth1(Index, [_ | Rest], Element) :-
+    Index > 1,
+    NextIndex is Index - 1,
+    nth1(NextIndex, Rest, Element).
+
+valid_destination(Board, SRow, SCol, TRow, TCol) :-
+    nth1(TRow, Board, TargetRow),
+    nth1(TCol, TargetRow, TargetCell),
+    %is_empty(TargetCell),
+    manhattan_distance(SRow, SCol, TRow, TCol, Dist),
+    Dist =< 1. 
+
+manhattan_distance(SRow, SCol, TRow, TCol, Dist) :-
+    Dist is abs(SRow - TRow) + abs(SCol - TCol).
+
+% Executa o movimento
+% execute_move(+Board, +Move, -NewBoard)
+execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard) :-
+    nth1(SRow, Board, SourceRow),
+    nth1(SCol, SourceRow, Stack),
+    % Determina o novo valor da célula destino
+    determine_new_stack(Stack, TargetCell, NewStack),
+    % Atualiza o tabuleiro
+    update_board(Board, SRow, SCol, empty, TempBoard),
+    update_board(TempBoard, TRow, TCol, NewStack, NewBoard).
+
+% Calcula o novo valor da célula destino
+%determine_new_stack(Stack, empty, Stack).  
+determine_new_stack(Stack, _, Stack).   % Para um movimento posicional.
+determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2.  % Empilhamento.
+determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2. 
+determine_new_stack(_, _, _). % Outros casos podem ser adicionados, se necessário.
+
+% Atualiza uma célula do tabuleiro
+% update_board(+Board, +Row, +Col, +NewValue, -NewBoard)
+update_board(Board, Row, Col, NewValue, NewBoard) :-
+    nth1(Row, Board, OldRow),
+    replace_in_list(OldRow, Col, NewValue, NewRow),
+    replace_in_list(Board, Row, NewRow, NewBoard).
+
+% Substitui um elemento em uma lista
+% replace_in_list(+List, +Index, +NewValue, -NewList)
+replace_in_list([_|Rest], 1, NewValue, [NewValue|Rest]).
+replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
+    Index > 1,
+    NextIndex is Index - 1,
+    replace_in_list(Rest, NextIndex, NewValue, NewRest).
+
+
+%%
+%value(+GameState, +Player, -Value)
+/*value(GameState, Player, Value):-
+    score_difference(GameState, Player, ScoreDiff),
+    board_control_difference(GameState, Player, ControlDiff),
+    strategic_opportunities(GameState, Player, OpportunityDiff),
+    WeightScore = 0.5, 
+    WeightControl = 0.3,
+    WeightOpportunities = 0.2,
+    RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
+    normalize(RawValue, Value).
+
+% metrics
+player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
+player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), blue, ScoreBlue).
+
+score_difference(GameState, Player, ScoreDiff):-
+    game_state(_, _, ConfigDetails) = GameState,
+    player_score(ConfigDetails, Player, PlayerScore),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    player_score(ConfigDetails, Opponent, OpponentScore),
+    ScoreDiff is PlayerScore - OpponentScore.
+
+board_control_difference(GameState, Player, ControlDiff) :-
+    game_state(Board, _, _) = GameState,
+    board_control(Board, Player, PlayerCount),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    board_control(Board, Opponent, OpponentCount),
+    ControlDiff is PlayerCount - OpponentCount.
+
+board_control(Board, Player, Count) :-
+    findall(Stack, (member(Row, Board), member(Stack, Row), stack_owner(Stack, Player)), Stacks),
+    length(Stacks, Count).
+
+strategic_opportunities(GameState, Player, OpportunityDiff):-
+    valid_moves(GameState, PlayerMoves),
+    length(PlayerMoves, PlayerMovesCount),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    valid_moves(game_state(_, Opponent, _), OpponentMoves),
+    length(OpponentMoves, OpponentMovesCount),
+    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
+
+% normalize the value for human understanding
+normalize(Value, NormalizedValue):-
+    MaxValue = 100, 
+    MinValue = -100,
+    NormalizedValue is 2 * ((Value - MinValue) / (MaxValue - MinValue)) - 1.*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*between(Low, High, Low) :- 
     Low =< High.
 between(Low, High, X) :-
     Low < High,
@@ -263,11 +391,6 @@ valid_destination(Stack, TargetCell) :-
     StackHeight >= TargetHeight.
 
 
-% Obtém a altura de uma pilha
-% stack_height(+Stack, -Height)
-stack_height(red(H), H).
-stack_height(blue(H), H).
-
 % Valida o tipo de movimento (posicional, empilhamento ou captura)
 % valid_move_type(+Board, +Move, +Stack, +TargetCell)
 valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, empty) :-
@@ -301,118 +424,4 @@ find_closest_stack(Board, SRow, SCol, Stack, ClosestRow, ClosestCol) :-
 % manhattan(+Row1, +Col1, +Row2, +Col2, -Distance)
 % Calcula a distância Manhattan entre duas posições.
 manhattan(Row1, Col1, Row2, Col2, Distance) :-
-    Distance is abs(Row1 - Row2) + abs(Col1 - Col2).
-
-% Executa o movimento
-% execute_move(+Board, +Move, -NewBoard)
-execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard) :-
-    nth1(SRow, Board, SourceRow),
-    nth1(SCol, SourceRow, Stack),
-    % Determina o novo valor da célula destino
-    determine_new_stack(Stack, TargetCell, NewStack),
-    % Atualiza o tabuleiro
-    update_board(Board, SRow, SCol, empty, TempBoard),
-    update_board(TempBoard, TRow, TCol, NewStack, NewBoard).
-
-% Calcula o novo valor da célula destino
-%determine_new_stack(Stack, empty, Stack).  % Para um movimento posicional.
-determine_new_stack(Stack, _, Stack).  % Para um movimento posicional.
-determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2.  % Empilhamento.
-determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2.
-determine_new_stack(_, _, _).  % Outros casos podem ser adicionados, se necessário.
-
-% Atualiza uma célula do tabuleiro
-% update_board(+Board, +Row, +Col, +NewValue, -NewBoard)
-update_board(Board, Row, Col, NewValue, NewBoard) :-
-    nth1(Row, Board, OldRow),
-    replace_in_list(OldRow, Col, NewValue, NewRow),
-    replace_in_list(Board, Row, NewRow, NewBoard).
-
-% Substitui um elemento em uma lista
-% replace_in_list(+List, +Index, +NewValue, -NewList)
-replace_in_list([_|Rest], 1, NewValue, [NewValue|Rest]).
-replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
-    Index > 1,
-    NextIndex is Index - 1,
-    replace_in_list(Rest, NextIndex, NewValue, NewRest).
-
-% nth1(+Index, +List, -Element)
-% Retorna o Elemento na posição Index (1-based) da Lista.
-nth1(1, [Element | _], Element).  % Caso base: o índice é 1.
-nth1(Index, [_ | Rest], Element) :-
-    Index > 1,
-    NextIndex is Index - 1,
-    nth1(NextIndex, Rest, Element).
-
-/*interactive_move(GameState, NewGameState) :-
-    write('Insira a linha de origem: '), read(SRow),
-    write('Insira a coluna de origem: '), read(SCol),
-    write('Insira a linha de destino: '), read(TRow),
-    write('Insira a coluna de destino: '), read(TCol),
-    (move(GameState, move(SRow, SCol, TRow, TCol), NewGameState) ->
-        write('Movimento realizado com sucesso.'), nl
-    ;
-        write('Movimento inválido, tente novamente.'), nl,
-        interactive_move(GameState, NewGameState)
-    ).*/
-
-interactive_move(GameState, NewGameState) :-
-    display_game(GameState),  % Exibe o estado atual do tabuleiro
-    write('Insira a linha de origem: '), read(SRow),
-    write('Insira a coluna de origem: '), read(SCol),
-    write('Insira a linha de destino: '), read(TRow),
-    write('Insira a coluna de destino: '), read(TCol),
-    (move(GameState, move(SRow, SCol, TRow, TCol), NewGameState) ->
-        true  % Movimento válido, prossiga
-    ;
-        write('Movimento invalido, tente novamente.'), nl,
-        interactive_move(GameState, NewGameState)  % Tenta novamente
-    ).
-%%
-%value(+GameState, +Player, -Value)
-value(GameState, Player, Value):-
-    score_difference(GameState, Player, ScoreDiff),
-    board_control_difference(GameState, Player, ControlDiff),
-    strategic_opportunities(GameState, Player, OpportunityDiff),
-    WeightScore = 0.5, 
-    WeightControl = 0.3,
-    WeightOpportunities = 0.2,
-    RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
-    normalize(RawValue, Value).
-
-% metrics
-player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
-player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), blue, ScoreBlue).
-
-score_difference(GameState, Player, ScoreDiff):-
-    game_state(_, _, ConfigDetails) = GameState,
-    player_score(ConfigDetails, Player, PlayerScore),
-    (Player = red -> Opponent = blue ; Opponent = red),
-    player_score(ConfigDetails, Opponent, OpponentScore),
-    ScoreDiff is PlayerScore - OpponentScore.
-
-board_control_difference(GameState, Player, ControlDiff) :-
-    game_state(Board, _, _) = GameState,
-    board_control(Board, Player, PlayerCount),
-    (Player = red -> Opponent = blue ; Opponent = red),
-    board_control(Board, Opponent, OpponentCount),
-    ControlDiff is PlayerCount - OpponentCount.
-
-board_control(Board, Player, Count) :-
-    findall(Stack, (member(Row, Board), member(Stack, Row), stack_owner(Stack, Player)), Stacks),
-    length(Stacks, Count).
-
-strategic_opportunities(GameState, Player, OpportunityDiff):-
-    valid_moves(GameState, PlayerMoves),
-    length(PlayerMoves, PlayerMovesCount),
-    (Player = red -> Opponent = blue ; Opponent = red),
-    valid_moves(game_state(_, Opponent, _), OpponentMoves),
-    length(OpponentMoves, OpponentMovesCount),
-    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
-
-% normalize the value for human understanding
-normalize(Value, NormalizedValue):-
-    MaxValue = 100, 
-    MinValue = -100,
-    NormalizedValue is 2 * ((Value - MinValue) / (MaxValue - MinValue)) - 1.
-
+    Distance is abs(Row1 - Row2) + abs(Col1 - Col2).*/
