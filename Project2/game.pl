@@ -136,7 +136,9 @@ display_game(game_state(Board, Player, Config)) :-
     write('Jogador atual: '), write(Player), nl,
     write('Tabuleiro:'), nl,
     display_board(Board),
-    write('Detalhes da configuracao: '), write(Config), nl.
+    write('Detalhes da configuracao: '), write(Config), nl,
+    value(game_state(Board, Player, Config), Player, Value),
+    write('Vantagem: '), write(Value), nl.
 
 % Exibição do tabuleiro
 % display_board(+Board)
@@ -146,6 +148,11 @@ display_board([Row | Rest]) :-
     print_row(Row),
     nl,  % Pula para a próxima linha
     display_board(Rest).
+
+display_moves([]).
+display_moves([Move | Rest]) :-
+    write(Move), nl,
+    display_moves(Rest).
 
 % Exibição de uma linha do tabuleiro
 % print_row(+Row)
@@ -173,13 +180,13 @@ print_row([Cell | Rest]) :-
     execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
     next_player(CurrentPlayer, NextPlayer).*/
 
-move(game_state(Board, CurrentPlayer, Config), move(SRow, SCol, TRow, TCol), game_state(NewBoard, NextPlayer, Config)) :-
-    % Validação do movimento
-    valid_moves(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
-
+move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, Config)) :-
+    % Geração de todos os movimentos válidos
+    valid_moves(game_state(Board, CurrentPlayer, Config), ListOfMoves), 
+    % Verificar se a jogada atual está nessa lista
+    member(Move, ListOfMoves),
     % Execução do movimento no tabuleiro
     execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard),
-
     % Alternar o jogador
     next_player(CurrentPlayer, NextPlayer).
 
@@ -205,18 +212,30 @@ next_player(blue, red).
     valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell),
     write('Tipo de movimento valido.'), nl.*/
 
-valid_moves(Board, Player, move(SRow, SCol, TRow, TCol)) :-
-    nth1(SRow, Board, SourceRow),
-    nth1(SCol, SourceRow, Stack),  % `Stack` usado corretamente aqui
-    stack_owner(Stack, Player),  % Garante que pertence ao jogador
-    write('Origem válida: '), write(Stack), nl,  % Debug para verificar `Stack`
-    nth1(TRow, Board, TargetRow),
-    nth1(TCol, TargetRow, TargetCell),  % Aqui `TargetCell` também é usado
-    write('Destino valido: '), write(TargetCell), nl,
-    valid_destination(Stack, TargetCell),
-    write('Destino aprovado: '), write(TargetCell), nl,
-    valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell),
-    write('Tipo de movimento valido.'), nl.
+between(Low, High, Low) :- 
+    Low =< High.
+between(Low, High, X) :-
+    Low < High,
+    NextLow is Low + 1,
+    between(NextLow, High, X).
+
+valid_moves(game_state(Board, Player, _), ListOfMoves):-
+    length(Board, Size),
+    findall(move(SRow, SCol, TRow, TCol),
+        (
+            between(1, Size, SRow),
+            nth1(SRow, Board, SourceRow),
+            between(1, Size, SCol),
+            nth1(SCol, SourceRow, Stack),  
+            stack_owner(Stack, Player),
+            between(1, Size, TRow),   
+            nth1(TRow, Board, TargetRow),
+            between(1, Size, TCol),
+            nth1(TCol, TargetRow, TargetCell),  
+            valid_destination(Stack, TargetCell),
+            valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell)
+        ),
+        ListOfMoves).
 
 
 % Identifica o dono de uma pilha
@@ -349,4 +368,51 @@ interactive_move(GameState, NewGameState) :-
         write('Movimento invalido, tente novamente.'), nl,
         interactive_move(GameState, NewGameState)  % Tenta novamente
     ).
+%%
+%value(+GameState, +Player, -Value)
+value(GameState, Player, Value):-
+    score_difference(GameState, Player, ScoreDiff),
+    board_control_difference(GameState, Player, ControlDiff),
+    strategic_opportunities(GameState, Player, OpportunityDiff),
+    WeightScore = 0.5, 
+    WeightControl = 0.3,
+    WeightOpportunities = 0.2,
+    RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
+    normalize(RawValue, Value).
+
+% metrics
+player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
+player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), blue, ScoreBlue).
+
+score_difference(GameState, Player, ScoreDiff):-
+    game_state(_, _, ConfigDetails) = GameState,
+    player_score(ConfigDetails, Player, PlayerScore),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    player_score(ConfigDetails, Opponent, OpponentScore),
+    ScoreDiff is PlayerScore - OpponentScore.
+
+board_control_difference(GameState, Player, ControlDiff) :-
+    game_state(Board, _, _) = GameState,
+    board_control(Board, Player, PlayerCount),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    board_control(Board, Opponent, OpponentCount),
+    ControlDiff is PlayerCount - OpponentCount.
+
+board_control(Board, Player, Count) :-
+    findall(Stack, (member(Row, Board), member(Stack, Row), stack_owner(Stack, Player)), Stacks),
+    length(Stacks, Count).
+
+strategic_opportunities(GameState, Player, OpportunityDiff):-
+    valid_moves(GameState, PlayerMoves),
+    length(PlayerMoves, PlayerMovesCount),
+    (Player = red -> Opponent = blue ; Opponent = red),
+    valid_moves(game_state(_, Opponent, _), OpponentMoves),
+    length(OpponentMoves, OpponentMovesCount),
+    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
+
+% normalize the value for human understanding
+normalize(Value, NormalizedValue):-
+    MaxValue = 100, 
+    MinValue = -100,
+    NormalizedValue is 2 * ((Value - MinValue) / (MaxValue - MinValue)) - 1.
 
