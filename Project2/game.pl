@@ -143,9 +143,9 @@ display_game(game_state(Board, Player, Config)) :-
     write('Jogador atual: '), write(Player), nl,
     write('Tabuleiro:'), nl,
     display_board(Board),
-    write('Detalhes da configuracao: '), write(Config), nl.
-    %value(game_state(Board, Player, Config), Player, Value),
-    %write('Vantagem: '), write(Value), nl.
+    write('Detalhes da configuracao: '), write(Config), nl,
+    value(game_state(Board, Player, Config), Player, Value),
+    write('Vantagem: '), write(Value), nl.
 
 % Exibição do tabuleiro
 % display_board(+Board)
@@ -248,6 +248,8 @@ manhattan_distance(SRow, SCol, TRow, TCol, Dist) :-
 execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard) :-
     nth1(SRow, Board, SourceRow),
     nth1(SCol, SourceRow, Stack),
+    nth1(TRow, Board, TargetRow),                
+    nth1(TCol, TargetRow, TargetCell),
     % Determina o novo valor da célula destino
     determine_new_stack(Stack, TargetCell, NewStack),
     % Atualiza o tabuleiro
@@ -256,10 +258,14 @@ execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard) :-
 
 % Calcula o novo valor da célula destino
 %determine_new_stack(Stack, empty, Stack).  
-determine_new_stack(Stack, _, Stack).   % Para um movimento posicional.
-determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2.  % Empilhamento.
-determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2. 
-determine_new_stack(_, _, _). % Outros casos podem ser adicionados, se necessário.
+determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2, !.  
+determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2, !.
+determine_new_stack(red(H1), blue(H2), red(H3)) :- 
+    H1 >= H2,  
+    H3 is H1 - H2 + 1, !.  
+determine_new_stack(blue(H1), red(H2), blue(H3)) :- 
+    H1 >= H2, 
+    H3 is H1 - H2 + 1, !. 
 
 % Atualiza uma célula do tabuleiro
 % update_board(+Board, +Row, +Col, +NewValue, -NewBoard)
@@ -279,7 +285,7 @@ replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
 
 %%
 %value(+GameState, +Player, -Value)
-/*value(GameState, Player, Value):-
+value(GameState, Player, Value):-
     score_difference(GameState, Player, ScoreDiff),
     board_control_difference(GameState, Player, ControlDiff),
     strategic_opportunities(GameState, Player, OpportunityDiff),
@@ -287,9 +293,10 @@ replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
     WeightControl = 0.3,
     WeightOpportunities = 0.2,
     RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
-    normalize(RawValue, Value).
+    normalize(RawValue, NormalizedValue),
+    round_to_n_decimal_places(NormalizedValue, 3, Value).
 
-% metrics
+% metrics for value
 player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
 player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), blue, ScoreBlue).
 
@@ -317,13 +324,19 @@ strategic_opportunities(GameState, Player, OpportunityDiff):-
     (Player = red -> Opponent = blue ; Opponent = red),
     valid_moves(game_state(_, Opponent, _), OpponentMoves),
     length(OpponentMoves, OpponentMovesCount),
-    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
+    OpportunityDiff is 5 - OpponentMovesCount.
 
 % normalize the value for human understanding
 normalize(Value, NormalizedValue):-
     MaxValue = 100, 
     MinValue = -100,
-    NormalizedValue is 2 * ((Value - MinValue) / (MaxValue - MinValue)) - 1.*/
+    NormalizedValue is 2 * ((Value - MinValue) / (MaxValue - MinValue)) - 1.
+
+round_to_n_decimal_places(Number, N, Rounded) :-
+    Factor is 10 ** N,       
+    Scaled is Number * Factor,
+    RoundedScaled is round(Scaled),  
+    Rounded is RoundedScaled / Factor.  
 
 
 
