@@ -11,16 +11,32 @@
     handle_choice(Choice).*/
 
 % Predicado principal para iniciar o jogo
-play :-
+/*play :-
     write('Bem-vindo ao Anaash!'), nl,
     write('1. Iniciar Jogo'), nl,
     write('2. Sair'), nl,
     write('Escolha uma opcao: '),
     read(Choice),
+    handle_initial_choice(Choice).*/
+
+% Predicado principal para iniciar o jogo
+play :-
+    nl,
+    write('*******************************************'), nl,
+    write('*           Bem-vindo ao Anaash!         *'), nl,
+    write('*******************************************'), nl,
+    nl,
+    write('  Escolha uma opcao abaixo:'), nl,
+    write('  ---------------------------------------'), nl,
+    write('  1. Iniciar Jogo'), nl,
+    write('  2. Sair'), nl,
+    write('  ---------------------------------------'), nl,
+    write('  Sua escolha: '),
+    read(Choice),
     handle_initial_choice(Choice).
 
 % Menu inicial
-handle_initial_choice(1) :-
+/*handle_initial_choice(1) :-
     write('Escolha o modo de jogo:'), nl,
     write('1. Humano vs Humano'), nl,
     write('2. Humano vs Computador'), nl,
@@ -35,7 +51,39 @@ handle_initial_choice(2) :-
     write('Saindo do jogo. Até logo!'), nl.
 handle_initial_choice(_) :-
     write('Opcao invalida! Tente novamente.'), nl,
+    play.*/
+
+% Menu inicial
+handle_initial_choice(1) :-
+    nl,
+    write('*******************************************'), nl,
+    write('*         Configuracao do Jogo           *'), nl,
+    write('*******************************************'), nl,
+    nl,
+    write('  Escolha o modo de jogo:'), nl,
+    write('  ---------------------------------------'), nl,
+    write('  1. Humano vs Humano'), nl,
+    write('  2. Humano vs Computador'), nl,
+    write('  3. Computador vs Humano'), nl,
+    write('  4. Computador vs Computador'), nl,
+    write('  ---------------------------------------'), nl,
+    write('  Sua escolha: '),
+    read(GameType),
+    (GameType >= 1, GameType =< 4 -> choose_difficulty(GameType)
+    ;
+        write('Opção inválida! Tente novamente.'), nl, handle_initial_choice(1)).
+
+handle_initial_choice(2) :-
+    nl,
+    write('*******************************************'), nl,
+    write('*          Obrigado por jogar!           *'), nl,
+    write('*******************************************'), nl.
+
+handle_initial_choice(_) :-
+    nl,
+    write('Opção inválida! Tente novamente.'), nl,
     play.
+
 
 /*choose_difficulty(GameType) :-
     (GameType = 1 -> 
@@ -55,7 +103,7 @@ handle_initial_choice(_) :-
 
 
 % Menu para escolher a dificuldade ou iniciar o jogo diretamente no modo H/H
-choose_difficulty(GameType) :-
+/*choose_difficulty(GameType) :-
     (GameType = 1 -> 
         % H/H não tem nível de dificuldade
         write('Iniciando o jogo Humano vs Humano...'), nl,
@@ -71,7 +119,31 @@ choose_difficulty(GameType) :-
         (Level >= 1, Level =< 2 ->
             setup_game(GameType, Level)
         ;
-            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).
+            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).*/
+
+choose_difficulty(GameType) :-
+    nl,
+    (GameType = 1 ->
+        write('*******************************************'), nl,
+        write('*       Iniciando Humano vs Humano       *'), nl,
+        write('*******************************************'), nl,
+        initial_state([size(6), player_types(human, human)], GameState),
+        game_loop(GameState)
+    ;
+        % Para outros modos, solicitar nível de dificuldade
+        write('*******************************************'), nl,
+        write('*        Escolha o nivel de dificuldade  *'), nl,
+        write('*******************************************'), nl,
+        nl,
+        write('  1. Nivel 1 (Movimentos Aleatorios)'), nl,
+        write('  2. Nivel 2 (Movimentos Inteligentes)'), nl,
+        write('  ---------------------------------------'), nl,
+        write('  Sua escolha: '),
+        read(Level),
+        (Level >= 1, Level =< 2 ->
+            setup_game(GameType, Level)
+        ;
+            write('Nível inválido! Tente novamente.'), nl, choose_difficulty(GameType))).
 
 % Configurar o jogo com base no tipo e nível
 /*setup_game(GameType, Level) :-
