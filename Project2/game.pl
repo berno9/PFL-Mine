@@ -258,6 +258,7 @@ execute_move(Board, move(SRow, SCol, TRow, TCol), NewBoard) :-
 
 % Calcula o novo valor da célula destino
 %determine_new_stack(Stack, empty, Stack).  
+determine_new_stack(Stack, empty, Stack) :- !.
 determine_new_stack(red(H1), red(H2), red(H3)) :- H3 is H1 + H2, !.  
 determine_new_stack(blue(H1), blue(H2), blue(H3)) :- H3 is H1 + H2, !.
 determine_new_stack(red(H1), blue(H2), red(H3)) :- 
@@ -265,7 +266,7 @@ determine_new_stack(red(H1), blue(H2), red(H3)) :-
     H3 is H1 - H2 + 1, !.  
 determine_new_stack(blue(H1), red(H2), blue(H3)) :- 
     H1 >= H2, 
-    H3 is H1 - H2 + 1, !. 
+    H3 is H1 - H2 + 1, !.
 
 % Atualiza uma célula do tabuleiro
 % update_board(+Board, +Row, +Col, +NewValue, -NewBoard)
