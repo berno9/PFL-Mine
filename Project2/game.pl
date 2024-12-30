@@ -139,23 +139,120 @@ interactive_move(GameState, NewGameState) :-
 % Exibição do estado atual do jogo
 % display_game(+GameState)
 % Exibe o tabuleiro atual no terminal.
-display_game(game_state(Board, Player, Config)) :-
+/*display_game(game_state(Board, Player, Config)) :-
     write('Jogador atual: '), write(Player), nl,
     write('Tabuleiro:'), nl,
     display_board(Board),
     write('Detalhes da configuracao: '), write(Config), nl,
+    value(game_state(Board, Player, Config), Player, Value),
+    write('Vantagem: '), write(Value), nl.*/
+
+% display_game(+GameState)
+% Exibe o tabuleiro atual no terminal de maneira amigável para os jogadores.
+display_game(game_state(Board, Player, Config)) :-
+    nl,
+    write('Jogador atual: '), write(Player), nl, nl,
+    write('Tabuleiro:'), nl,
+    display_board_with_grid(Board),
+    nl,
+    write('Detalhes da configuração: '), write(Config), nl,
     value(game_state(Board, Player, Config), Player, Value),
     write('Vantagem: '), write(Value), nl.
 
 % Exibição do tabuleiro
 % display_board(+Board)
 % Exibe o tabuleiro linha por linha, separando os elementos com espaços.
-display_board([]).
+/*display_board([]).
 display_board([Row | Rest]) :-
     print_row(Row),
     nl,  
-    display_board(Rest).
+    display_board(Rest).*/
 
+display_board_with_grid(Board) :-
+    length(Board, Size),
+    write('     '), display_column_labels(Size), nl,
+    write('   +'), display_horizontal_line(Size), nl,
+    display_board_rows_with_grid(Board, 1).
+
+% display_board_rows_with_grid(+Board, +RowNum)
+% Exibe cada linha do tabuleiro com separadores e números das linhas.
+display_board_rows_with_grid([], _).
+display_board_rows_with_grid([Row | Rest], RowNum) :-
+    format(' ~w | ', [RowNum]),  % Exibe o número da linha
+    display_row_with_grid(Row),
+    nl,
+    length(Row, Size),  % Calcula o número de colunas na linha
+    write('   +'), display_horizontal_line(Size), nl,  % Usa o tamanho calculado
+    NextRowNum is RowNum + 1,
+    display_board_rows_with_grid(Rest, NextRowNum).
+
+% Exibe os elementos de uma linha separados por linhas verticais.
+display_row_with_grid([]).
+display_row_with_grid([Cell | Rest]) :-
+    format_cell(Cell, FormattedCell),
+    format(' ~w | ', [FormattedCell]),
+    display_row_with_grid(Rest).
+
+format_cell(empty, '  ') :- !.
+format_cell(red(Height), FormattedCell) :-
+    integer(Height),  % Garante que Height seja um número inteiro
+    atom_number(HeightAtom, Height),  % Converte o número em átomo
+    atom_concat(' R', HeightAtom, FormattedCell).  % Concatena os valores
+format_cell(blue(Height), FormattedCell) :-
+    integer(Height),  % Garante que Height seja um número inteiro
+    atom_number(HeightAtom, Height),  % Converte o número em átomo
+    atom_concat(' B', HeightAtom, FormattedCell).  % Concatena os valores
+format_cell(_, 'ERR').  % Caso padrão para células inválidas
+
+% atom_number(+Atom, -Number)
+% Converte um átomo em um número ou um número em um átomo.
+atom_number(Atom, Number) :-
+    (atom(Atom) -> atom_chars(Atom, Chars), number_chars(Number, Chars)
+    ; integer(Number) -> number_chars(Number, Chars), atom_chars(Atom, Chars)).
+
+% atom_concat(+Atom1, +Atom2, -Result)
+% Concatena os átomos Atom1 e Atom2 em Result.
+atom_concat(Atom1, Atom2, Result) :-
+    atom(Atom1),        % Verifica se Atom1 é um átomo
+    atom(Atom2),        % Verifica se Atom2 é um átomo
+    atom_chars(Atom1, Chars1),  % Divide Atom1 em caracteres
+    atom_chars(Atom2, Chars2),  % Divide Atom2 em caracteres
+    append(Chars1, Chars2, CharsResult),  % Concatena as listas de caracteres
+    atom_chars(Result, CharsResult).  % Converte de volta para átomo
+
+% display_horizontal_line(+Size)
+% Exibe uma linha horizontal de separação usando recursão.
+display_horizontal_line(0) :- !, nl. % Caso base: nada a exibir.
+display_horizontal_line(Size) :-
+    Size > 0,
+    write('------+'),
+    NewSize is Size - 1,
+    display_horizontal_line(NewSize).
+
+
+% numlist(+Low, +High, -List)
+% Cria uma lista de números de Low a High (inclusive).
+numlist(Low, High, []) :- Low > High, !.
+numlist(Low, High, [Low | Rest]) :-
+    Low =< High,
+    Next is Low + 1,
+    numlist(Next, High, Rest).
+
+
+% display_column_labels(+Size)
+% Exibe os rótulos das colunas na parte superior do tabuleiro.
+display_column_labels(Size) :-
+    numlist(1, Size, ColLabels),
+    display_column_labels_recursive(ColLabels).
+
+% display_column_labels_recursive(+Labels)
+% Exibe os rótulos das colunas recursivamente.
+display_column_labels_recursive([]).
+display_column_labels_recursive([Label | Rest]) :-
+    format('   ~w   ', [Label]),
+    display_column_labels_recursive(Rest).
+
+    
 display_moves([]).
 display_moves([Move | Rest]) :-
     write(Move), nl,
