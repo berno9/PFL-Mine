@@ -2,13 +2,99 @@
 % Predicado principal para iniciar o jogo
 % play/0
 % Inicia o menu principal do jogo e permite configurar e começar a partida.
-play :-
+/*play :-
     write('Bem-vindo ao Anaash!'), nl,
     write('1. Iniciar jogo'), nl,
     write('2. Sair'), nl,
     write('Escolha uma opcao: '),
     read(Choice),
-    handle_choice(Choice).
+    handle_choice(Choice).*/
+
+% Predicado principal para iniciar o jogo
+play :-
+    write('Bem-vindo ao Anaash!'), nl,
+    write('1. Iniciar Jogo'), nl,
+    write('2. Sair'), nl,
+    write('Escolha uma opcao: '),
+    read(Choice),
+    handle_initial_choice(Choice).
+
+% Menu inicial
+handle_initial_choice(1) :-
+    write('Escolha o modo de jogo:'), nl,
+    write('1. Humano vs Humano'), nl,
+    write('2. Humano vs Computador'), nl,
+    write('3. Computador vs Humano'), nl,
+    write('4. Computador vs Computador'), nl,
+    write('Escolha o tipo de jogo: '),
+    read(GameType),
+    (GameType >= 1, GameType =< 4 -> choose_difficulty(GameType)
+    ;
+        write('Opcao invalida! Tente novamente.'), nl, handle_initial_choice(1)).
+handle_initial_choice(2) :-
+    write('Saindo do jogo. Até logo!'), nl.
+handle_initial_choice(_) :-
+    write('Opcao invalida! Tente novamente.'), nl,
+    play.
+
+/*choose_difficulty(GameType) :-
+    (GameType = 1 -> 
+        % H/H não tem nível de dificuldade
+        initial_state([size(6), player_types(human, human)], GameState),
+        game_loop(GameState)
+    ;
+        write('Escolha o nivel de dificuldade:'), nl,
+        write('1. Nivel 1 (Movimentos Aleatorios)'), nl,
+        write('2. Nivel 2 (Movimentos Inteligentes)'), nl,
+        write('Escolha o nivel: '),
+        read(Level),
+        (Level >= 1, Level =< 2 ->
+            setup_game(GameType, Level)
+        ;
+            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).*/
+
+
+% Menu para escolher a dificuldade ou iniciar o jogo diretamente no modo H/H
+choose_difficulty(GameType) :-
+    (GameType = 1 -> 
+        % H/H não tem nível de dificuldade
+        write('Iniciando o jogo Humano vs Humano...'), nl,
+        initial_state([size(6), player_types(human, human)], GameState),
+        game_loop(GameState)
+    ;
+        % Para outros modos, solicitar nível de dificuldade
+        write('Escolha o nivel de dificuldade:'), nl,
+        write('1. Nivel 1 (Movimentos Aleatorios)'), nl,
+        write('2. Nivel 2 (Movimentos Inteligentes)'), nl,
+        write('Escolha o nivel: '),
+        read(Level),
+        (Level >= 1, Level =< 2 ->
+            setup_game(GameType, Level)
+        ;
+            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).
+
+% Configurar o jogo com base no tipo e nível
+/*setup_game(GameType, Level) :-
+    (GameType = 2 -> initial_state([size(6), player_types(human, computer(Level))], GameState) ;
+     GameType = 3 -> initial_state([size(6), player_types(computer(Level), human)], GameState) ;
+     GameType = 4 -> initial_state([size(6), player_types(computer(Level), computer(Level))], GameState)),
+    game_loop(GameState).*/
+
+setup_game(GameType, Level) :-
+    
+    (GameType = 2 -> 
+        write('Iniciando o jogo Humano vs Computador...'), nl,
+        initial_state([size(6), player_types(human, computer(Level))], GameState)
+    ;
+     GameType = 3 -> 
+        write('Iniciando o jogo Computador vs Humano...'), nl,
+        initial_state([size(6), player_types(computer(Level), human)], GameState)
+    ;
+     GameType = 4 -> 
+        write('Iniciando o jogo Computador vs Computador...'), nl,
+        initial_state([size(6), player_types(computer(Level), computer(Level))], GameState)),
+    game_loop(GameState).
+
 
 % Tratamento da escolha no menu
 % handle_choice(+Choice)
@@ -22,7 +108,7 @@ handle_choice(2) :-
     write('Saindo do jogo. Até logo!'), nl.
 
 handle_choice(_) :-
-    write('Opção inválida! Tente novamente.'), nl,
+    write('Opcao invalida! Tente novamente.'), nl,
     play.
 
 % Predicado inicial do estado do jogo
@@ -33,7 +119,7 @@ handle_choice(_) :-
 initial_state(GameConfig, game_state(Board, red, ConfigDetails)) :-
     % Obter configurações do jogo
     member(size(Size), GameConfig),  % Tamanho do tabuleiro
-    member(player_names(PlayerRed, PlayerBlue), GameConfig),  % Nomes dos jogadores
+    member(player_types(PlayerRed, PlayerBlue), GameConfig),  % Nomes dos jogadores
     % Gerar o tabuleiro inicial
     generate_board(Size, Board),
     % Configurações adicionais no estado do jogo
@@ -72,7 +158,7 @@ alternating_pattern([X | Rest], X, Y) :-
 
 %%%
 
-game_loop(GameState) :-
+/*game_loop(GameState) :-
     GameState = game_state(_, CurrentPlayer, _),
     write('Jogador '), write(CurrentPlayer), write(', faz um movimento.'), nl,
     interactive_move(GameState, NewGameState), 
@@ -80,7 +166,28 @@ game_loop(GameState) :-
         write('O jogo terminou! Vencedor: '), write(Winner), nl
     ;
         game_loop(NewGameState)  
+    ).*/
+
+% Ciclo principal do jogo
+game_loop(GameState) :-
+    GameState = game_state(_, CurrentPlayer, Config),
+    display_game(GameState),
+    (game_over(GameState, Winner) -> 
+        write('O jogo terminou! Vencedor: '), write(Winner), nl
+    ;
+        Config = config(_, [PlayerRed, PlayerBlue], _),
+        (CurrentPlayer = red -> PlayerType = PlayerRed ; PlayerType = PlayerBlue),
+        play_turn(GameState, PlayerType, NewGameState),
+        game_loop(NewGameState)
     ).
+
+% Jogar turno de um jogador
+play_turn(GameState, human, NewGameState) :-
+    interactive_move(GameState, NewGameState).
+play_turn(GameState, computer(Level), NewGameState) :-
+    choose_move(GameState, Level, Move),
+    write('Computador escolheu: '), write(Move), nl,
+    move(GameState, Move, NewGameState).
 
 % Verifica se o jogo terminou
 % game_over(+GameState, -Winner)
@@ -122,7 +229,7 @@ stack_height(blue(H), H).
 is_empty([]).
 
 interactive_move(GameState, NewGameState) :-
-    display_game(GameState),
+    %display_game(GameState),
     write('Insira a linha de origem: '), read(SRow),
     write('Insira a coluna de origem: '), read(SCol),
     write('Insira a linha de destino: '), read(TRow),
@@ -142,7 +249,7 @@ display_game(game_state(Board, Player, Config)) :-
     write('Tabuleiro:'), nl,
     display_board_with_grid(Board),
     nl,
-    write('Detalhes da configuração: '), write(Config), nl,
+    write('Detalhes da configuracao: '), write(Config), nl,
     value(game_state(Board, Player, Config), Player, Value),
     write('Vantagem: '), write(Value), nl.
 
@@ -409,7 +516,39 @@ round_to_n_decimal_places(Number, N, Rounded) :-
     Rounded is RoundedScaled / Factor.  
 
 
+choose_move(GameState, 1, Move):-
+    valid_moves(GameState, Moves),
+    random_member(Move, Moves).  % from random library
+    
+choose_move(GameState, 2, Move):-
+    valid_moves(GameState, Move),
+    evaluate_moves(GameState, Moves, ScoredMoves),
+    best_move(ScoredMoves, BestMove).
 
+evaluate_moves(_, [], []).
+evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]):-
+    game_state(Board, Player, Config) = GameState,
+    execute_move(Board, Move, NewBoard),
+    update_config(game_state(NewBoard, Player, Config), game_state(NewBoard, Player, NewConfig)),
+    value(game_state(NewBoard, Player, NewConfig), Player, Score),
+    evaluate_moves(GameState, RestMoves, RestScoredMoves).
+
+update_config(game_state(Board, CurrentPlayer, config(Size, [PlayerRed, PlayerBlue], red(RedScore)-blue(BlueScore))), 
+game_state(Board, NextPlayer, config(Size, [PlayerRed, PlayerBlue], red(NewRedScore)-blue(NewBlueScore)))) :-
+    update_scores(Board, red, RedScore, NewRedScore),
+    update_scores(Board, blue, BlueScore, NewBlueScore),
+    next_player(CurrentPlayer, NextPlayer).
+update_scores(Board, Player, OldScore, NewScore) :-
+    count_pieces(Board, Player, PieceCount),
+    NewScore is PieceCount.
+
+best_move([Move-Score], Move):- !.
+best_move([Move1-Score1, Move2-Score2 | Rest], BestMove):-
+    (Score1 >= Score2 -> 
+        best_move([Move1-Score1 | Rest], BestMove)  
+    ;
+        best_move([Move2-Score2 | Rest], BestMove)
+    ).
 
 
 
