@@ -134,19 +134,6 @@ interactive_move(GameState, NewGameState) :-
         interactive_move(GameState, NewGameState)  
     ).
 
-%%%
-
-% Exibição do estado atual do jogo
-% display_game(+GameState)
-% Exibe o tabuleiro atual no terminal.
-/*display_game(game_state(Board, Player, Config)) :-
-    write('Jogador atual: '), write(Player), nl,
-    write('Tabuleiro:'), nl,
-    display_board(Board),
-    write('Detalhes da configuracao: '), write(Config), nl,
-    value(game_state(Board, Player, Config), Player, Value),
-    write('Vantagem: '), write(Value), nl.*/
-
 % display_game(+GameState)
 % Exibe o tabuleiro atual no terminal de maneira amigável para os jogadores.
 display_game(game_state(Board, Player, Config)) :-
@@ -162,12 +149,6 @@ display_game(game_state(Board, Player, Config)) :-
 % Exibição do tabuleiro
 % display_board(+Board)
 % Exibe o tabuleiro linha por linha, separando os elementos com espaços.
-/*display_board([]).
-display_board([Row | Rest]) :-
-    print_row(Row),
-    nl,  
-    display_board(Rest).*/
-
 display_board_with_grid(Board) :-
     length(Board, Size),
     write('     '), display_column_labels(Size), nl,
@@ -210,15 +191,6 @@ atom_number(Atom, Number) :-
     (atom(Atom) -> atom_chars(Atom, Chars), number_chars(Number, Chars)
     ; integer(Number) -> number_chars(Number, Chars), atom_chars(Atom, Chars)).
 
-% atom_concat(+Atom1, +Atom2, -Result)
-% Concatena os átomos Atom1 e Atom2 em Result.
-atom_concat(Atom1, Atom2, Result) :-
-    atom(Atom1),        % Verifica se Atom1 é um átomo
-    atom(Atom2),        % Verifica se Atom2 é um átomo
-    atom_chars(Atom1, Chars1),  % Divide Atom1 em caracteres
-    atom_chars(Atom2, Chars2),  % Divide Atom2 em caracteres
-    append(Chars1, Chars2, CharsResult),  % Concatena as listas de caracteres
-    atom_chars(Result, CharsResult).  % Converte de volta para átomo
 
 % display_horizontal_line(+Size)
 % Exibe uma linha horizontal de separação usando recursão.
@@ -446,9 +418,32 @@ round_to_n_decimal_places(Number, N, Rounded) :-
 
 
 
+% Exibição do estado atual do jogo
+% display_game(+GameState)
+% Exibe o tabuleiro atual no terminal.
+/*display_game(game_state(Board, Player, Config)) :-
+    write('Jogador atual: '), write(Player), nl,
+    write('Tabuleiro:'), nl,
+    display_board(Board),
+    write('Detalhes da configuracao: '), write(Config), nl,
+    value(game_state(Board, Player, Config), Player, Value),
+    write('Vantagem: '), write(Value), nl.*/
 
+/*display_board([]).
+display_board([Row | Rest]) :-
+    print_row(Row),
+    nl,  
+    display_board(Rest).*/
 
-
+% atom_concat(+Atom1, +Atom2, -Result)
+% Concatena os átomos Atom1 e Atom2 em Result.
+/*atom_concat(Atom1, Atom2, Result) :-
+    atom(Atom1),        % Verifica se Atom1 é um átomo
+    atom(Atom2),        % Verifica se Atom2 é um átomo
+    atom_chars(Atom1, Chars1),  % Divide Atom1 em caracteres
+    atom_chars(Atom2, Chars2),  % Divide Atom2 em caracteres
+    append(Chars1, Chars2, CharsResult),  % Concatena as listas de caracteres
+    atom_chars(Result, CharsResult).  % Converte de volta para átomo*/
 
 /*between(Low, High, Low) :- 
     Low =< High.
