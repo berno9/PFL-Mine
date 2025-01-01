@@ -167,22 +167,6 @@ setup_game(GameType, Level) :-
         initial_state([size(6), player_types(computer(Level), computer(Level))], GameState)),
     game_loop(GameState).
 
-
-% Tratamento da escolha no menu
-% handle_choice(+Choice)
-% Processa a escolha do menu inicial.
-handle_choice(1) :-
-    write('Configurando o jogo...'), nl,
-    initial_state([size(6), player_names('Alice', 'Bob')], GameState),
-    game_loop(GameState). % Inicia o ciclo principal do jogo
-
-handle_choice(2) :-
-    write('Saindo do jogo. Até logo!'), nl.
-
-handle_choice(_) :-
-    write('Opcao invalida! Tente novamente.'), nl,
-    play.
-
 % Predicado inicial do estado do jogo
 % initial_state(+GameConfig, -GameState)
 % Configura o estado inicial do jogo com base na configuração fornecida.
@@ -602,7 +586,7 @@ choose_move(GameState, 1, Move):-
     valid_moves(GameState, Moves),
     random_member(Move, Moves).  % from random library
     
-choose_move(GameState, 2, Move):-
+/*choose_move(GameState, 2, Move):-
     valid_moves(GameState, Move),
     evaluate_moves(GameState, Moves, ScoredMoves),
     best_move(ScoredMoves, BestMove).
@@ -615,22 +599,13 @@ evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]):-
     value(game_state(NewBoard, Player, NewConfig), Player, Score),
     evaluate_moves(GameState, RestMoves, RestScoredMoves).
 
-update_config(game_state(Board, CurrentPlayer, config(Size, [PlayerRed, PlayerBlue], red(RedScore)-blue(BlueScore))), 
-game_state(Board, NextPlayer, config(Size, [PlayerRed, PlayerBlue], red(NewRedScore)-blue(NewBlueScore)))) :-
-    update_scores(Board, red, RedScore, NewRedScore),
-    update_scores(Board, blue, BlueScore, NewBlueScore),
-    next_player(CurrentPlayer, NextPlayer).
-update_scores(Board, Player, OldScore, NewScore) :-
-    count_pieces(Board, Player, PieceCount),
-    NewScore is PieceCount.
-
 best_move([Move-Score], Move):- !.
 best_move([Move1-Score1, Move2-Score2 | Rest], BestMove):-
     (Score1 >= Score2 -> 
         best_move([Move1-Score1 | Rest], BestMove)  
     ;
         best_move([Move2-Score2 | Rest], BestMove)
-    ).
+    ).*/
 
 
 
@@ -752,3 +727,19 @@ find_closest_stack(Board, SRow, SCol, Stack, ClosestRow, ClosestCol) :-
 % Calcula a distância Manhattan entre duas posições.
 manhattan(Row1, Col1, Row2, Col2, Distance) :-
     Distance is abs(Row1 - Row2) + abs(Col1 - Col2).*/
+
+
+/*% Tratamento da escolha no menu
+% handle_choice(+Choice)
+% Processa a escolha do menu inicial.
+handle_choice(1) :-
+    write('Configurando o jogo...'), nl,
+    initial_state([size(6), player_names('Alice', 'Bob')], GameState),
+    game_loop(GameState). % Inicia o ciclo principal do jogo
+
+handle_choice(2) :-
+    write('Saindo do jogo. Até logo!'), nl.
+
+handle_choice(_) :-
+    write('Opcao invalida! Tente novamente.'), nl,
+    play.*/
