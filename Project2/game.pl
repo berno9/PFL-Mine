@@ -420,13 +420,15 @@ print_row([Cell | Rest]) :-
 
 %%%
 
-move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, Config)) :-
+move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
     % Geração de todos os movimentos válidos
     valid_moves(game_state(Board, CurrentPlayer, Config), ListOfMoves), 
     % Verificar se a jogada atual está nessa lista
     member(Move, ListOfMoves), 
     % Execução do movimento no tabuleiro
     execute_move(Board, Move, NewBoard), 
+    % Atualizar a configuração
+    update_config(game_state(NewBoard, CurrentPlayer, Config), game_state(NewBoard, CurrentPlayer, NewConfig)),
     % Alternar o jogador
     next_player(CurrentPlayer, NextPlayer). 
 
@@ -531,6 +533,14 @@ replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
     NextIndex is Index - 1,
     replace_in_list(Rest, NextIndex, NewValue, NewRest).
 
+update_config(game_state(Board, CurrentPlayer, config(Size, [PlayerRed, PlayerBlue], red(RedScore)-blue(BlueScore))), 
+game_state(Board, NextPlayer, config(Size, [PlayerRed, PlayerBlue], red(NewRedScore)-blue(NewBlueScore)))) :-
+    update_scores(Board, red, RedScore, NewRedScore),
+    update_scores(Board, blue, BlueScore, NewBlueScore).
+
+update_scores(Board, Player, OldScore, NewScore) :-
+    count_pieces(Board, Player, PieceCount),
+    NewScore is PieceCount.
 
 %%
 %value(+GameState, +Player, -Value)
