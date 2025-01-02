@@ -243,7 +243,7 @@ play_turn(GameState, human, NewGameState) :-
     interactive_move(GameState, NewGameState).
 play_turn(GameState, computer(Level), NewGameState) :-
     choose_move(GameState, Level, Move),
-    (Level == 2 ->
+    /*(Level == 2 ->
         write('Deseja continuar continuar para a jogada do computador? (s/n): '),
         read(Answer),
         (Answer == s ->
@@ -255,7 +255,9 @@ play_turn(GameState, computer(Level), NewGameState) :-
     ;
         write('Computador escolheu: '), write(Move), nl,
         move(GameState, Move, NewGameState)
-    ).
+    ).*/
+    write('Computador escolheu: '), write(Move), nl,
+    move(GameState, Move, NewGameState).
 
 % Verifica se o jogo terminou
 % game_over(+GameState, -Winner)
