@@ -1,3 +1,4 @@
+:- use_module(library(random)).
 % game.pl
 % Predicado principal para iniciar o jogo
 % play/0
@@ -404,7 +405,7 @@ print_row([Cell | Rest]) :-
 
 %%%
 
-move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
+/*move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
     % Geração de todos os movimentos válidos
     valid_moves(game_state(Board, CurrentPlayer, Config), ListOfMoves), 
     % Verificar se a jogada atual está nessa lista
@@ -414,7 +415,16 @@ move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPl
     % Atualizar a configuração
     update_config(game_state(NewBoard, CurrentPlayer, Config), game_state(NewBoard, CurrentPlayer, NewConfig)),
     % Alternar o jogador
-    next_player(CurrentPlayer, NextPlayer). 
+    next_player(CurrentPlayer, NextPlayer). */
+
+move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
+    valid_moves(game_state(Board, CurrentPlayer, Config), ValidMoves),  % Obter todos os movimentos válidos
+    member(Move, ValidMoves),                                          % Verificar se o movimento está na lista
+    execute_move(Board, Move, NewBoard),                               % Executar o movimento
+    update_config(game_state(NewBoard, CurrentPlayer, Config),         % Atualizar a configuração
+                  game_state(NewBoard, CurrentPlayer, NewConfig)),
+    next_player(CurrentPlayer, NextPlayer).                            % Alternar o jogador
+
 
 % Alterna o jogador atual
 % next_player(+CurrentPlayer, -NextPlayer)
@@ -430,6 +440,13 @@ valid_moves(game_state(Board, CurrentPlayer, Config), Moves) :-
         valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
         Moves
     ).
+
+valid_moves(game_state(Board, CurrentPlayer, _), Moves) :-
+    findall(move(SRow, SCol, TRow, TCol),
+            valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
+            Moves),
+    (Moves = [] -> fail ; true). % Retorna falha se não houver movimentos válidos
+
 
 valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)) :-
     length(Board, Size), 
@@ -528,7 +545,19 @@ update_scores(Board, Player, OldScore, NewScore) :-
 
 %%
 %value(+GameState, +Player, -Value)
-value(GameState, Player, Value):-
+/*value(GameState, Player, Value):-
+    score_difference(GameState, Player, ScoreDiff),
+    board_control_difference(GameState, Player, ControlDiff),
+    strategic_opportunities(GameState, Player, OpportunityDiff),
+    WeightScore = 0.5, 
+    WeightControl = 0.3,
+    WeightOpportunities = 0.2,
+    RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
+    normalize(RawValue, NormalizedValue),
+    round_to_n_decimal_places(NormalizedValue, 3, Value).*/
+
+value(game_state([], _, _), _, 0) :- !.  % Valor neutro para tabuleiros vazios
+value(GameState, Player, Value) :-
     score_difference(GameState, Player, ScoreDiff),
     board_control_difference(GameState, Player, ControlDiff),
     strategic_opportunities(GameState, Player, OpportunityDiff),
@@ -538,6 +567,7 @@ value(GameState, Player, Value):-
     RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
     normalize(RawValue, NormalizedValue),
     round_to_n_decimal_places(NormalizedValue, 3, Value).
+
 
 % metrics for value
 player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
@@ -585,7 +615,42 @@ round_to_n_decimal_places(Number, N, Rounded) :-
 choose_move(GameState, 1, Move):-
     valid_moves(GameState, Moves),
     random_member(Move, Moves).  % from random library
-    
+
+% Predicado para escolher o movimento no nível 2 (algoritmo greedy)
+choose_move(GameState, 2, BestMove) :-
+    valid_moves(GameState, Moves),                % Obtém todos os movimentos válidos
+    evaluate_moves(GameState, Moves, ScoredMoves),% Avalia cada movimento
+    best_move(ScoredMoves, BestMove).             % Seleciona o melhor movimento
+
+% Avalia todos os movimentos e retorna uma lista de movimentos com seus valores
+/*evaluate_moves(_, [], []).                        % Caso base: sem movimentos
+evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]) :-
+    move(GameState, Move, NewGameState),          % Simula o movimento
+    GameState = game_state(_, CurrentPlayer, _),  % Obtém o jogador atual
+    value(NewGameState, CurrentPlayer, Score),    % Avalia o estado resultante
+    evaluate_moves(GameState, RestMoves, RestScoredMoves). % Avalia o restante*/
+
+evaluate_moves(_, [], []). % Caso base: sem movimentos
+evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]) :-
+    ( move(GameState, Move, NewGameState) ->  % Tenta simular o movimento
+        GameState = game_state(_, CurrentPlayer, _),  
+        value(NewGameState, CurrentPlayer, Score)   % Avalia o estado resultante
+    ;
+        Score = -9999  % Atribui um valor baixo para movimentos inválidos
+    ),
+    evaluate_moves(GameState, RestMoves, RestScoredMoves).
+
+
+% Seleciona o movimento com o maior valor
+best_move([Move-Score], Move) :- !.               % Caso base: apenas um movimento
+best_move([Move1-Score1, Move2-Score2 | Rest], BestMove) :-
+    (Score1 >= Score2 ->                          % Compara os valores
+        best_move([Move1-Score1 | Rest], BestMove)
+    ;
+        best_move([Move2-Score2 | Rest], BestMove)
+    ).
+
+
 /*choose_move(GameState, 2, Move):-
     valid_moves(GameState, Move),
     evaluate_moves(GameState, Moves, ScoredMoves),
