@@ -243,8 +243,19 @@ play_turn(GameState, human, NewGameState) :-
     interactive_move(GameState, NewGameState).
 play_turn(GameState, computer(Level), NewGameState) :-
     choose_move(GameState, Level, Move),
-    write('Computador escolheu: '), write(Move), nl,
-    move(GameState, Move, NewGameState).
+    (Level == 2 ->
+        write('Deseja continuar continuar para a jogada do computador? (s/n): '),
+        read(Answer),
+        (Answer == s ->
+            write('Computador escolheu: '), write(Move), nl,
+            move(GameState, Move, NewGameState)
+        ;
+            game_over(GameState, Winner)
+        )
+    ;
+        write('Computador escolheu: '), write(Move), nl,
+        move(GameState, Move, NewGameState)
+    ).
 
 % Verifica se o jogo terminou
 % game_over(+GameState, -Winner)
@@ -323,7 +334,7 @@ display_board_with_grid(Board) :-
 % Exibe cada linha do tabuleiro com separadores e números das linhas.
 display_board_rows_with_grid([], _).
 display_board_rows_with_grid([Row | Rest], RowNum) :-
-    format(' ~w | ', [RowNum]),  % Exibe o número da linha
+    format(' ~w |', [RowNum]),  % Exibe o número da linha
     display_row_with_grid(Row),
     nl,
     length(Row, Size),  % Calcula o número de colunas na linha
@@ -335,10 +346,9 @@ display_board_rows_with_grid([Row | Rest], RowNum) :-
 display_row_with_grid([]).
 display_row_with_grid([Cell | Rest]) :-
     format_cell(Cell, FormattedCell),
-    format(' ~w | ', [FormattedCell]),
+    format(' ~w  |', [FormattedCell]),
     display_row_with_grid(Rest).
 
-format_cell(empty, '  ') :- !.
 format_cell(red(Height), FormattedCell) :-
     integer(Height),  % Garante que Height seja um número inteiro
     atom_number(HeightAtom, Height),  % Converte o número em átomo
@@ -347,6 +357,7 @@ format_cell(blue(Height), FormattedCell) :-
     integer(Height),  % Garante que Height seja um número inteiro
     atom_number(HeightAtom, Height),  % Converte o número em átomo
     atom_concat(' B', HeightAtom, FormattedCell).  % Concatena os valores
+format_cell(empty, '   ') :- !.
 format_cell(_, 'ERR').  % Caso padrão para células inválidas
 
 % atom_number(+Atom, -Number)
@@ -434,18 +445,13 @@ next_player(blue, red).
 %% valid_moves
 valid_moves(game_state(Board, _, _), []) :-
     is_empty(Board), !. 
-valid_moves(game_state(Board, CurrentPlayer, Config), Moves) :-
+valid_moves(game_state(Board, CurrentPlayer, _), Moves) :-
     setof(
         move(SRow, SCol, TRow, TCol),
         valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
         Moves
-    ).
-
-valid_moves(game_state(Board, CurrentPlayer, _), Moves) :-
-    findall(move(SRow, SCol, TRow, TCol),
-            valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)),
-            Moves),
-    (Moves = [] -> fail ; true). % Retorna falha se não houver movimentos válidos
+    ),
+    (Moves = [] -> fail ; true).
 
 
 valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)) :-
@@ -458,6 +464,7 @@ valid_move(Board, CurrentPlayer, move(SRow, SCol, TRow, TCol)) :-
     stack_owner(Stack, CurrentPlayer), 
     between(1, Size, TRow), 
     between(1, Size, TCol), 
+    \+ (SRow == TRow , SCol == TCol),
     valid_destination(Board, SRow, SCol, TRow, TCol). 
 
 between(Low, High, Low) :- 
@@ -651,6 +658,17 @@ best_move([Move1-Score1, Move2-Score2 | Rest], BestMove) :-
     ).
 
 
+
+
+
+
+
+
+
+
+
+
+
 /*choose_move(GameState, 2, Move):-
     valid_moves(GameState, Move),
     evaluate_moves(GameState, Moves, ScoredMoves),
@@ -671,13 +689,6 @@ best_move([Move1-Score1, Move2-Score2 | Rest], BestMove):-
     ;
         best_move([Move2-Score2 | Rest], BestMove)
     ).*/
-
-
-
-
-
-
-
 
 
 % Exibição do estado atual do jogo
