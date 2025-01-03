@@ -1,24 +1,4 @@
 :- use_module(library(random)).
-% game.pl
-% Predicado principal para iniciar o jogo
-% play/0
-% Inicia o menu principal do jogo e permite configurar e começar a partida.
-/*play :-
-    write('Bem-vindo ao Anaash!'), nl,
-    write('1. Iniciar jogo'), nl,
-    write('2. Sair'), nl,
-    write('Escolha uma opcao: '),
-    read(Choice),
-    handle_choice(Choice).*/
-
-% Predicado principal para iniciar o jogo
-/*play :-
-    write('Bem-vindo ao Anaash!'), nl,
-    write('1. Iniciar Jogo'), nl,
-    write('2. Sair'), nl,
-    write('Escolha uma opcao: '),
-    read(Choice),
-    handle_initial_choice(Choice).*/
 
 % Predicado principal para iniciar o jogo
 play :-
@@ -37,29 +17,31 @@ play :-
     handle_initial_choice(Choice).
 
 % Menu inicial
-/*handle_initial_choice(1) :-
-    write('Escolha o modo de jogo:'), nl,
-    write('1. Humano vs Humano'), nl,
-    write('2. Humano vs Computador'), nl,
-    write('3. Computador vs Humano'), nl,
-    write('4. Computador vs Computador'), nl,
-    write('Escolha o tipo de jogo: '),
-    read(GameType),
-    (GameType >= 1, GameType =< 4 -> choose_difficulty(GameType)
-    ;
-        write('Opcao invalida! Tente novamente.'), nl, handle_initial_choice(1)).
-handle_initial_choice(2) :-
-    write('Saindo do jogo. Até logo!'), nl.
-handle_initial_choice(_) :-
-    write('Opcao invalida! Tente novamente.'), nl,
-    play.*/
-
-% Menu inicial
 handle_initial_choice(1) :-
     nl,
     write('*******************************************'), nl,
     write('*         Configuracao do Jogo           *'), nl,
     write('*******************************************'), nl,
+    nl,
+    write('  Escolha o tamanho do tabuleiro (entre 5 e 10): '), nl,
+    read(Size),
+    (Size >= 5, Size =< 10 -> choose_size(Size)
+    ;
+        write('Opção inválida! Tente novamente.'), nl, handle_initial_choice(1)).
+
+
+handle_initial_choice(2) :-
+    nl,
+    write('*******************************************'), nl,
+    write('*          Obrigado por jogar!            *'), nl,
+    write('*******************************************'), nl.
+
+handle_initial_choice(_) :-
+    nl,
+    write('Opção inválida! Tente novamente.'), nl,
+    play.
+    
+choose_size(Size) :-
     nl,
     write('  Escolha o modo de jogo:'), nl,
     write('  ---------------------------------------'), nl,
@@ -70,65 +52,17 @@ handle_initial_choice(1) :-
     write('  ---------------------------------------'), nl,
     write('  Sua escolha: '),
     read(GameType),
-    (GameType >= 1, GameType =< 4 -> choose_difficulty(GameType)
+    (GameType >= 1, GameType =< 4 -> choose_difficulty(Size, GameType)
     ;
         write('Opção inválida! Tente novamente.'), nl, handle_initial_choice(1)).
 
-handle_initial_choice(2) :-
-    nl,
-    write('*******************************************'), nl,
-    write('*          Obrigado por jogar!           *'), nl,
-    write('*******************************************'), nl.
-
-handle_initial_choice(_) :-
-    nl,
-    write('Opção inválida! Tente novamente.'), nl,
-    play.
-
-
-/*choose_difficulty(GameType) :-
-    (GameType = 1 -> 
-        % H/H não tem nível de dificuldade
-        initial_state([size(6), player_types(human, human)], GameState),
-        game_loop(GameState)
-    ;
-        write('Escolha o nivel de dificuldade:'), nl,
-        write('1. Nivel 1 (Movimentos Aleatorios)'), nl,
-        write('2. Nivel 2 (Movimentos Inteligentes)'), nl,
-        write('Escolha o nivel: '),
-        read(Level),
-        (Level >= 1, Level =< 2 ->
-            setup_game(GameType, Level)
-        ;
-            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).*/
-
-
-% Menu para escolher a dificuldade ou iniciar o jogo diretamente no modo H/H
-/*choose_difficulty(GameType) :-
-    (GameType = 1 -> 
-        % H/H não tem nível de dificuldade
-        write('Iniciando o jogo Humano vs Humano...'), nl,
-        initial_state([size(6), player_types(human, human)], GameState),
-        game_loop(GameState)
-    ;
-        % Para outros modos, solicitar nível de dificuldade
-        write('Escolha o nivel de dificuldade:'), nl,
-        write('1. Nivel 1 (Movimentos Aleatorios)'), nl,
-        write('2. Nivel 2 (Movimentos Inteligentes)'), nl,
-        write('Escolha o nivel: '),
-        read(Level),
-        (Level >= 1, Level =< 2 ->
-            setup_game(GameType, Level)
-        ;
-            write('Nivel inválido! Tente novamente.'), nl, choose_difficulty(GameType))).*/
-
-choose_difficulty(GameType) :-
+choose_difficulty(Size, GameType) :-
     nl,
     (GameType = 1 ->
         write('*******************************************'), nl,
         write('*       Iniciando Humano vs Humano       *'), nl,
         write('*******************************************'), nl,
-        initial_state([size(6), player_types(human, human)], GameState),
+        initial_state([size(Size), player_types(human, human)], GameState),
         game_loop(GameState)
     ;
         % Para outros modos, solicitar nível de dificuldade
@@ -142,30 +76,24 @@ choose_difficulty(GameType) :-
         write('  Sua escolha: '),
         read(Level),
         (Level >= 1, Level =< 2 ->
-            setup_game(GameType, Level)
+            setup_game(Size, GameType, Level)
         ;
-            write('Nível inválido! Tente novamente.'), nl, choose_difficulty(GameType))).
+            write('Nível inválido! Tente novamente.'), nl, choose_difficulty(Size, GameType))).
 
 % Configurar o jogo com base no tipo e nível
-/*setup_game(GameType, Level) :-
-    (GameType = 2 -> initial_state([size(6), player_types(human, computer(Level))], GameState) ;
-     GameType = 3 -> initial_state([size(6), player_types(computer(Level), human)], GameState) ;
-     GameType = 4 -> initial_state([size(6), player_types(computer(Level), computer(Level))], GameState)),
-    game_loop(GameState).*/
-
-setup_game(GameType, Level) :-
+setup_game(Size, GameType, Level) :-
     
     (GameType = 2 -> 
         write('Iniciando o jogo Humano vs Computador...'), nl,
-        initial_state([size(6), player_types(human, computer(Level))], GameState)
+        initial_state([size(Size), player_types(human, computer(Level))], GameState)
     ;
      GameType = 3 -> 
         write('Iniciando o jogo Computador vs Humano...'), nl,
-        initial_state([size(6), player_types(computer(Level), human)], GameState)
+        initial_state([size(Size), player_types(computer(Level), human)], GameState)
     ;
      GameType = 4 -> 
         write('Iniciando o jogo Computador vs Computador...'), nl,
-        initial_state([size(6), player_types(computer(Level), computer(Level))], GameState)),
+        initial_state([size(Size), player_types(computer(Level), computer(Level))], GameState)),
     game_loop(GameState).
 
 % Predicado inicial do estado do jogo
@@ -180,7 +108,10 @@ initial_state(GameConfig, game_state(Board, red, ConfigDetails)) :-
     % Gerar o tabuleiro inicial
     generate_board(Size, Board),
     % Configurações adicionais no estado do jogo
-    ConfigDetails = config(Size, [PlayerRed, PlayerBlue], red(0)-blue(0)).
+    % count_pieces(+Board, +Player, -Count)
+    count_pieces(Board, red, RedCount),
+    count_pieces(Board, blue, BlueCount),
+    ConfigDetails = config(Size, [PlayerRed, PlayerBlue], red(RedCount)-blue(BlueCount)).
 
 % Geração do tabuleiro inicial
 % generate_board(+Size, -Board)
@@ -214,16 +145,6 @@ alternating_pattern([X | Rest], X, Y) :-
     alternating_pattern(Rest, Y, X).
 
 %%%
-
-/*game_loop(GameState) :-
-    GameState = game_state(_, CurrentPlayer, _),
-    write('Jogador '), write(CurrentPlayer), write(', faz um movimento.'), nl,
-    interactive_move(GameState, NewGameState), 
-    (game_over(NewGameState, Winner) -> 
-        write('O jogo terminou! Vencedor: '), write(Winner), nl
-    ;
-        game_loop(NewGameState)  
-    ).*/
 
 % Ciclo principal do jogo
 game_loop(GameState) :-
@@ -299,17 +220,32 @@ stack_height(blue(H), H).
 is_empty([]).
 
 interactive_move(GameState, NewGameState) :-
-    %display_game(GameState),
-    write('Insira a linha de origem: '), read(SRow),
-    write('Insira a coluna de origem: '), read(SCol),
-    write('Insira a linha de destino: '), read(TRow),
-    write('Insira a coluna de destino: '), read(TCol),
-    (move(GameState, move(SRow, SCol, TRow, TCol), NewGameState) ->
-        true 
+    get_move_inputs(GameState, move(SRow, SCol, TRow, TCol)),
+    (
+        move(GameState, move(SRow, SCol, TRow, TCol), NewGameState)
+    ->
+        true
     ;
-        write('Movimento invalido, tente novamente.'), nl,
-        interactive_move(GameState, NewGameState)  
+        nl, write('Movimento invalido, tente novamente.'), nl, nl,
+        interactive_move(GameState, NewGameState)
     ).
+
+get_move_inputs(_, move(SRow, SCol, TRow, TCol)) :-
+    write('Prima "e" para reinicar a jogada atual a qualquer momento.'), nl,
+    get_single_input('Insira a linha de origem: ', SRow),
+    get_single_input('Insira a coluna de origem: ', SCol),
+    get_single_input('Insira a linha de destino: ', TRow),
+    get_single_input('Insira a coluna de destino: ', TCol).
+
+get_single_input(Message, Value) :-
+    write(Message),
+    read(Input),
+    handle_input(Input, Value).
+
+handle_input(e, _) :-
+    !, fail. 
+handle_input(Value, Value).
+
 
 % display_game(+GameState)
 % Exibe o tabuleiro atual no terminal de maneira amigável para os jogadores.
@@ -415,20 +351,7 @@ print_row([Cell | Rest]) :-
     format('~w ', [Cell]), 
     print_row(Rest).
 
-
 %%%
-
-/*move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
-    % Geração de todos os movimentos válidos
-    valid_moves(game_state(Board, CurrentPlayer, Config), ListOfMoves), 
-    % Verificar se a jogada atual está nessa lista
-    member(Move, ListOfMoves), 
-    % Execução do movimento no tabuleiro
-    execute_move(Board, Move, NewBoard), 
-    % Atualizar a configuração
-    update_config(game_state(NewBoard, CurrentPlayer, Config), game_state(NewBoard, CurrentPlayer, NewConfig)),
-    % Alternar o jogador
-    next_player(CurrentPlayer, NextPlayer). */
 
 move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPlayer, NewConfig)) :-
     valid_moves(game_state(Board, CurrentPlayer, Config), ValidMoves),  % Obter todos os movimentos válidos
@@ -553,17 +476,6 @@ update_scores(Board, Player, OldScore, NewScore) :-
     NewScore is PieceCount.
 
 %%
-%value(+GameState, +Player, -Value)
-/*value(GameState, Player, Value):-
-    score_difference(GameState, Player, ScoreDiff),
-    board_control_difference(GameState, Player, ControlDiff),
-    strategic_opportunities(GameState, Player, OpportunityDiff),
-    WeightScore = 0.5, 
-    WeightControl = 0.3,
-    WeightOpportunities = 0.2,
-    RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
-    normalize(RawValue, NormalizedValue),
-    round_to_n_decimal_places(NormalizedValue, 3, Value).*/
 
 value(game_state([], _, _), _, 0) :- !.  % Valor neutro para tabuleiros vazios
 value(GameState, Player, Value) :-
@@ -632,13 +544,6 @@ choose_move(GameState, 2, BestMove) :-
     best_move(ScoredMoves, BestMove).             % Seleciona o melhor movimento
 
 % Avalia todos os movimentos e retorna uma lista de movimentos com seus valores
-/*evaluate_moves(_, [], []).                        % Caso base: sem movimentos
-evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]) :-
-    move(GameState, Move, NewGameState),          % Simula o movimento
-    GameState = game_state(_, CurrentPlayer, _),  % Obtém o jogador atual
-    value(NewGameState, CurrentPlayer, Score),    % Avalia o estado resultante
-    evaluate_moves(GameState, RestMoves, RestScoredMoves). % Avalia o restante*/
-
 evaluate_moves(_, [], []). % Caso base: sem movimentos
 evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]) :-
     ( move(GameState, Move, NewGameState) ->  % Tenta simular o movimento
@@ -658,166 +563,3 @@ best_move([Move1-Score1, Move2-Score2 | Rest], BestMove) :-
     ;
         best_move([Move2-Score2 | Rest], BestMove)
     ).
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*choose_move(GameState, 2, Move):-
-    valid_moves(GameState, Move),
-    evaluate_moves(GameState, Moves, ScoredMoves),
-    best_move(ScoredMoves, BestMove).
-
-evaluate_moves(_, [], []).
-evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]):-
-    game_state(Board, Player, Config) = GameState,
-    execute_move(Board, Move, NewBoard),
-    update_config(game_state(NewBoard, Player, Config), game_state(NewBoard, Player, NewConfig)),
-    value(game_state(NewBoard, Player, NewConfig), Player, Score),
-    evaluate_moves(GameState, RestMoves, RestScoredMoves).
-
-best_move([Move-Score], Move):- !.
-best_move([Move1-Score1, Move2-Score2 | Rest], BestMove):-
-    (Score1 >= Score2 -> 
-        best_move([Move1-Score1 | Rest], BestMove)  
-    ;
-        best_move([Move2-Score2 | Rest], BestMove)
-    ).*/
-
-
-% Exibição do estado atual do jogo
-% display_game(+GameState)
-% Exibe o tabuleiro atual no terminal.
-/*display_game(game_state(Board, Player, Config)) :-
-    write('Jogador atual: '), write(Player), nl,
-    write('Tabuleiro:'), nl,
-    display_board(Board),
-    write('Detalhes da configuracao: '), write(Config), nl,
-    value(game_state(Board, Player, Config), Player, Value),
-    write('Vantagem: '), write(Value), nl.*/
-
-/*display_board([]).
-display_board([Row | Rest]) :-
-    print_row(Row),
-    nl,  
-    display_board(Rest).*/
-
-% atom_concat(+Atom1, +Atom2, -Result)
-% Concatena os átomos Atom1 e Atom2 em Result.
-/*atom_concat(Atom1, Atom2, Result) :-
-    atom(Atom1),        % Verifica se Atom1 é um átomo
-    atom(Atom2),        % Verifica se Atom2 é um átomo
-    atom_chars(Atom1, Chars1),  % Divide Atom1 em caracteres
-    atom_chars(Atom2, Chars2),  % Divide Atom2 em caracteres
-    append(Chars1, Chars2, CharsResult),  % Concatena as listas de caracteres
-    atom_chars(Result, CharsResult).  % Converte de volta para átomo*/
-
-/*between(Low, High, Low) :- 
-    Low =< High.
-between(Low, High, X) :-
-    Low < High,
-    NextLow is Low + 1,
-    between(NextLow, High, X).
-
-valid_moves(game_state(Board, Player, _), ListOfMoves):-
-    length(Board, Size),
-    findall(move(SRow, SCol, TRow, TCol),
-        (
-            between(1, Size, SRow),
-            nth1(SRow, Board, SourceRow),
-            between(1, Size, SCol),
-            nth1(SCol, SourceRow, Stack),  
-            stack_owner(Stack, Player),
-            between(1, Size, TRow),   
-            nth1(TRow, Board, TargetRow),
-            between(1, Size, TCol),
-            nth1(TCol, TargetRow, TargetCell),  
-            valid_destination(Stack, TargetCell),
-            valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, TargetCell)
-        ),
-        ListOfMoves).
-
-
-% Identifica o dono de uma pilha
-% stack_owner(+Stack, +Player)
-stack_owner(red(_), red).
-stack_owner(blue(_), blue).
-
-% Verifica se o destino é válido
-% valid_destination(+Stack, +TargetCell)
-valid_destination(Stack, empty).  % Destino vazio é válido para movimento posicional.
-valid_destination(Stack, TargetCell) :-
-    % Empilhamento: amigo e de altura igual ou maior.
-    stack_owner(Stack, Player),
-    stack_owner(TargetCell, Player),
-    stack_height(TargetCell, TargetHeight),
-    stack_height(Stack, StackHeight),
-    TargetHeight >= StackHeight.
-valid_destination(Stack, TargetCell) :-
-    % Captura: inimigo e de altura igual ou menor.
-    stack_owner(Stack, Player),
-    stack_owner(TargetCell, Enemy),
-    Player \= Enemy,
-    stack_height(TargetCell, TargetHeight),
-    stack_height(Stack, StackHeight),
-    StackHeight >= TargetHeight.
-
-
-% Valida o tipo de movimento (posicional, empilhamento ou captura)
-% valid_move_type(+Board, +Move, +Stack, +TargetCell)
-valid_move_type(Board, move(SRow, SCol, TRow, TCol), Stack, empty) :-
-    % Movimento posicional: Manhattan distance deve diminuir
-    manhattan_distance(Board, SRow, SCol, TRow, TCol, Stack, DistBefore, DistAfter),
-    DistAfter < DistBefore.
-valid_move_type(_, _, _, _).  % Para empilhamento e captura, já validado.
-
-% Calcula a distância Manhattan entre uma pilha e a mais próxima
-% manhattan_distance(+Board, +SRow, +SCol, +TRow, +TCol, +Stack, -DistBefore, -DistAfter)
-manhattan_distance(Board, SRow, SCol, TRow, TCol, Stack, DistBefore, DistAfter) :-
-    find_closest_stack(Board, SRow, SCol, Stack, ClosestRow, ClosestCol),
-    DistBefore is abs(SRow - ClosestRow) + abs(SCol - ClosestCol),
-    DistAfter is abs(TRow - ClosestRow) + abs(TCol - ClosestCol),
-    write('Distância antes: '), write(DistBefore), write(', depois: '), write(DistAfter), nl.
-
-% find_closest_stack(+Board, +SRow, +SCol, +Stack, -ClosestRow, -ClosestCol)
-% Encontra a pilha mais próxima na mesma linha ou coluna (não diagonal).
-find_closest_stack(Board, SRow, SCol, Stack, ClosestRow, ClosestCol) :-
-    findall((Dist, Row, Col),
-        (nth1(Row, Board, Line), 
-         nth1(Col, Line, Cell),
-         Cell \= empty,  % Deve ser uma célula ocupada
-         Cell \= Stack,  % Não considerar a célula atual
-         manhattan(SRow, SCol, Row, Col, Dist)),  % Calcula a distância
-        Distances),
-    sort(Distances, SortedDistances),  % Ordena por menor distância
-    SortedDistances = [(MinDist, ClosestRow, ClosestCol) | _],  % Pega o mais próximo
-    write('Distância mínima encontrada: '), write(MinDist), nl.
-
-% manhattan(+Row1, +Col1, +Row2, +Col2, -Distance)
-% Calcula a distância Manhattan entre duas posições.
-manhattan(Row1, Col1, Row2, Col2, Distance) :-
-    Distance is abs(Row1 - Row2) + abs(Col1 - Col2).*/
-
-
-/*% Tratamento da escolha no menu
-% handle_choice(+Choice)
-% Processa a escolha do menu inicial.
-handle_choice(1) :-
-    write('Configurando o jogo...'), nl,
-    initial_state([size(6), player_names('Alice', 'Bob')], GameState),
-    game_loop(GameState). % Inicia o ciclo principal do jogo
-
-handle_choice(2) :-
-    write('Saindo do jogo. Até logo!'), nl.
-
-handle_choice(_) :-
-    write('Opcao invalida! Tente novamente.'), nl,
-    play.*/
