@@ -27,14 +27,6 @@ handle_initial_choice(1) :-
     read(Size),
     process_size_choice(Size).
 
-process_size_choice(Size) :-
-    Size >= 5, Size =< 10,
-    !,
-    choose_size(Size).
-process_size_choice(_) :-
-    write('Opção inválida! Tente novamente.'), nl,
-    handle_initial_choice(1).
-
 handle_initial_choice(2) :-
     nl,
     write('*******************************************'), nl,
@@ -45,6 +37,14 @@ handle_initial_choice(_) :-
     nl,
     write('Opção inválida! Tente novamente.'), nl,
     play.
+
+process_size_choice(Size) :-
+    Size >= 5, Size =< 10,
+    !,
+    choose_size(Size).
+process_size_choice(_) :-
+    write('Opção inválida! Tente novamente.'), nl,
+    handle_initial_choice(1).
     
 choose_size(Size) :-
     nl,
@@ -201,8 +201,8 @@ play_next_turn(GameState, NewGameState) :-
     play_turn(GameState, PlayerType, NewGameState).
 
 % Determine the player type based on the current player
-determine_player_type(config(_, [PlayerRed, PlayerBlue], _), red, PlayerRed).
-determine_player_type(config(_, [PlayerRed, PlayerBlue], _), blue, PlayerBlue).
+determine_player_type(config(_, [PlayerRed, _], _), red, PlayerRed).
+determine_player_type(config(_, [_, PlayerBlue], _), blue, PlayerBlue).
 
 
 % Jogar turno de um jogador
@@ -453,7 +453,7 @@ nth1(Index, [_ | Rest], Element) :-
 
 valid_destination(Board, SRow, SCol, TRow, TCol) :-
     nth1(TRow, Board, TargetRow),
-    nth1(TCol, TargetRow, TargetCell),
+    nth1(TCol, TargetRow, _),
     manhattan_distance(SRow, SCol, TRow, TCol, Dist),
     Dist =< 1. 
 
@@ -500,12 +500,12 @@ replace_in_list([Head|Rest], Index, NewValue, [Head|NewRest]) :-
     NextIndex is Index - 1,
     replace_in_list(Rest, NextIndex, NewValue, NewRest).
 
-update_config(game_state(Board, CurrentPlayer, config(Size, [PlayerRed, PlayerBlue], red(RedScore)-blue(BlueScore))), 
-game_state(Board, NextPlayer, config(Size, [PlayerRed, PlayerBlue], red(NewRedScore)-blue(NewBlueScore)))) :-
+update_config(game_state(Board, _, config(Size, [PlayerRed, PlayerBlue], red(RedScore)-blue(BlueScore))), 
+game_state(Board, _, config(Size, [PlayerRed, PlayerBlue], red(NewRedScore)-blue(NewBlueScore)))) :-
     update_scores(Board, red, RedScore, NewRedScore),
     update_scores(Board, blue, BlueScore, NewBlueScore).
 
-update_scores(Board, Player, OldScore, NewScore) :-
+update_scores(Board, Player, _, NewScore) :-
     count_pieces(Board, Player, PieceCount),
     NewScore is PieceCount.
 
@@ -525,8 +525,8 @@ value(GameState, Player, Value) :-
 
 
 % metrics for value
-player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), red, ScoreRed).
-player_score(config(_, _, red(ScoreRed)-blue(ScoreBlue)), blue, ScoreBlue).
+player_score(config(_, _, red(ScoreRed)-blue(_)), red, ScoreRed).
+player_score(config(_, _, red(_)-blue(ScoreBlue)), blue, ScoreBlue).
 
 score_difference(GameState, red, ScoreDiff):-
     game_state(_, _, ConfigDetails) = GameState,
@@ -559,13 +559,13 @@ strategic_opportunities(GameState, red, OpportunityDiff):-
     length(PlayerMoves, PlayerMovesCount),
     valid_moves(game_state(_, blue, _), OpponentMoves),
     length(OpponentMoves, OpponentMovesCount),
-    OpportunityDiff is 5 - OpponentMovesCount.
+    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
 strategic_opportunities(GameState, blue, OpportunityDiff):-
     valid_moves(GameState, PlayerMoves),
     length(PlayerMoves, PlayerMovesCount),
     valid_moves(game_state(_, red, _), OpponentMoves),
     length(OpponentMoves, OpponentMovesCount),
-    OpportunityDiff is 5 - OpponentMovesCount.
+    OpportunityDiff is PlayerMovesCount - OpponentMovesCount.
 
 % normalize the value for human understanding
 normalize(Value, NormalizedValue):-
@@ -605,11 +605,11 @@ evaluate_moves(GameState, [Move | RestMoves], [Move-Score | RestScoredMoves]) :-
     evaluate_moves(GameState, RestMoves, RestScoredMoves).
 
 % Seleciona o movimento com o maior valor
-best_move([Move-Score], Move). % Caso base: apenas um movimento
-best_move([Move1-Score1, Move2-Score2 | Rest], BestMove) :-
+best_move([Move-_], Move). % Caso base: apenas um movimento
+best_move([Move1-Score1, _-Score2 | Rest], BestMove) :-
     Score1 >= Score2,
     best_move([Move1-Score1 | Rest], BestMove).
-best_move([Move1-Score1, Move2-Score2 | Rest], BestMove) :-
+best_move([_-Score1, Move2-Score2 | Rest], BestMove) :-
     Score1 < Score2,
     best_move([Move2-Score2 | Rest], BestMove).
 
