@@ -259,7 +259,9 @@ interactive_move(GameState, NewGameState) :-
     interactive_move(GameState, NewGameState).
 ```
 
+
 This design balances flexibility and modularity, making it easy to extend or modify gameplay elements. User interaction is prioritized for ease of use, while Prolog’s logical inference capabilities streamline game state management and AI decision-making.
+
 
 ### Conclusion
 
