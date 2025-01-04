@@ -167,3 +167,102 @@ The current design allows for the following potential extensions:
 - **Statistics and Leaderboards**: Tracking player performance, win rates, and AI difficulty success metrics to encourage competition and replayability.
 
 These considerations ensure that the game design remains modular, scalable, and adaptable to future development needs.
+
+### Game Logic
+The implementation of this game is structured around a modular and dynamic approach. 
+
+1. **Game Configuration Representation**
+The game configuration encapsulates information about the board size, player types, and initial game conditions.This is managed as a list of attributes that include:
+
+- Board Size: Defined by an integer between 5 and 10, chosen by the user at the start. This determines the number of rows and columns on the board.
+Player Types: Represented as a pair, such as human or computer(Level), where the level specifies the AI difficulty.
+The predicate `initial_state/2` initializes the game state based on these configurations. It generates the board structure and assigns player types and scores:
+
+```prolog
+initial_state([size(Size), player_types(PlayerRed, PlayerBlue)], game_state(Board, red, ConfigDetails)).
+```
+
+2. **Internal Game State Representation**
+The game state is encapsulated in the game_state/3 structure:
+
+- Board: A 2D list representing rows of the board. Each cell is an atom (e.g., red(1), blue(2), or empty), indicating the owner and stack height.
+- Current Player: Indicates whose turn it is, either red or blue.
+- Configuration Details: Includes the board size, player types, and score for both players.
+
+Example representations:
+
+- Initial State:
+```prolog
+Copiar código
+game_state(
+  [[red(1), blue(1)], [blue(1), red(1)]],  % 2x2 board
+  red,
+  config(2, [human, computer(1)], red(2)-blue(2))
+).
+```
+- Intermediate State: Reflects a game in progress with updated stacks and player turns.
+- Final State: Occurs when one player's stacks are entirely removed.
+
+3. **Move Representation**
+Moves are represented by the move(SRow, SCol, TRow, TCol) structure, where:
+
+- SRow, SCol: Source row and column of the move.
+- TRow, TCol: Target row and column of the move.
+
+The `move/3` predicate validates and executes a move. 
+Validity checks include:
+- Source cell belongs to the current player.
+- Target cell is within board bounds and reachable (Manhattan distance ≤ 1).
+- Move does not target the same cell as the source.
+
+The board is updated with `execute_move/3` to reflect the move:
+- Stacks are adjusted based on interaction (e.g., merging or capturing).
+- Ownership of stacks is recalculated.
+
+4. **User Interaction**
+The game features an interactive menu system for configuration and play:
+
+Menu Options:
+- Start a game (1), specifying board size and game type.
+- Exit the game (2).
+
+Input Validation:
+- Ensures valid numerical inputs for board size, game mode, and moves.
+- Invalid inputs trigger a prompt for re-entry.
+
+During gameplay:
+- Human players enter move coordinates interactively.
+- Computer players choose moves automatically, using strategies like random selection (Level 1) or greedy evaluation (Level 2).
+
+Example user interaction for moves:
+```prolog
+Copiar código
+write('Enter source row: '), read(SRow),
+write('Enter source column: '), read(SCol),
+write('Enter target row: '), read(TRow),
+write('Enter target column: '), read(TCol),
+Move = move(SRow, SCol, TRow, TCol).
+```
+
+Input errors (e.g., out-of-bounds moves) prompt retry:
+```prolog
+Copiar código
+interactive_move(GameState, NewGameState) :-
+    get_move_inputs(GameState, move(SRow, SCol, TRow, TCol)),
+    move(GameState, move(SRow, SCol, TRow, TCol), NewGameState).
+interactive_move(GameState, NewGameState) :-
+    nl, write('Invalid move. Try again.'), nl,
+    interactive_move(GameState, NewGameState).
+```
+
+This design balances flexibility and modularity, making it easy to extend or modify gameplay elements. User interaction is prioritized for ease of use, while Prolog’s logical inference capabilities streamline game state management and AI decision-making.
+
+### Conclusion
+
+The development of Anaash successfully brought the board game’s strategic complexity to life in Prolog, leveraging the language's declarative nature for representing game states, validating moves, and implementing strategies. Key achievements include dynamic game configuration, user-friendly interaction, and modular design, making the game scalable for future enhancements. The inclusion of two AI difficulty levels—random and greedy algorithms—offers challenges tailored to different player skill levels, while Prolog’s logical inference facilitates seamless state management.
+However, the game has limitations that present opportunities for improvement. Input handling, though functional, can be cumbersome for users unfamiliar with command-line interfaces, and the AI strategies lack deeper predictive capabilities. Visualization is limited to text-based outputs, which constrain accessibility and aesthetic appeal. Additionally, some edge cases in move validation and turn handling may require further refinement to ensure robustness.
+Future developments like implementing advanced AI (e.g., minimax or Monte Carlo Tree Search) and creating a graphical user interface for enhanced player experience could come into view. Other potential extensions include customizable rules, leaderboards for competitive play, and dynamic AI difficulty adjustments. 
+
+With all these enhancements, Anaash could evolve into an engaging and polished game for a broader audience.
+
+

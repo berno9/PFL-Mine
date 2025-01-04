@@ -411,7 +411,6 @@ move(game_state(Board, CurrentPlayer, Config), Move, game_state(NewBoard, NextPl
                   game_state(NewBoard, CurrentPlayer, NewConfig)),
     next_player(CurrentPlayer, NextPlayer).                            % Alternar o jogador
 
-
 % Alternar o jogador atual
 % Alterna entre os jogadores (red e blue).
 next_player(red, blue).
