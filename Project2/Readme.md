@@ -172,10 +172,11 @@ These considerations ensure that the game design remains modular, scalable, and 
 The implementation of this game is structured around a modular and dynamic approach. 
 
 1. **Game Configuration Representation**
+
 The game configuration encapsulates information about the board size, player types, and initial game conditions.This is managed as a list of attributes that include:
 
 - Board Size: Defined by an integer between 5 and 10, chosen by the user at the start. This determines the number of rows and columns on the board.
-Player Types: Represented as a pair, such as human or computer(Level), where the level specifies the AI difficulty.
+- Player Types: Represented as a pair, such as human or computer(Level), where the level specifies the AI difficulty.
 The predicate `initial_state/2` initializes the game state based on these configurations. It generates the board structure and assigns player types and scores:
 
 ```prolog
@@ -183,6 +184,7 @@ initial_state([size(Size), player_types(PlayerRed, PlayerBlue)], game_state(Boar
 ```
 
 2. **Internal Game State Representation**
+
 The game state is encapsulated in the game_state/3 structure:
 
 - Board: A 2D list representing rows of the board. Each cell is an atom (e.g., red(1), blue(2), or empty), indicating the owner and stack height.
@@ -204,6 +206,7 @@ game_state(
 - Final State: Occurs when one player's stacks are entirely removed.
 
 3. **Move Representation**
+
 Moves are represented by the move(SRow, SCol, TRow, TCol) structure, where:
 
 - SRow, SCol: Source row and column of the move.
@@ -220,6 +223,7 @@ The board is updated with `execute_move/3` to reflect the move:
 - Ownership of stacks is recalculated.
 
 4. **User Interaction**
+
 The game features an interactive menu system for configuration and play:
 
 Menu Options:
