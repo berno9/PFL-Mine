@@ -571,7 +571,7 @@ value(GameState, Player, Value) :-
     WeightOpportunities = 0.2,
     RawValue is (WeightScore * ScoreDiff) + (WeightControl * ControlDiff) + (WeightOpportunities * OpportunityDiff),
     normalize(RawValue, NormalizedValue),
-    round_to_n_decimal_places(NormalizedValue, 3, Value).
+    round_to_n_decimal_places(NormalizedValue, 2, Value).
 
 % Obtém o score do jogador com base no estado do jogo
 player_score(config(_, _, red(ScoreRed)-blue(_)), red, ScoreRed).
