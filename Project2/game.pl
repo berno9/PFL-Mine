@@ -209,8 +209,26 @@ announce_winner(Winner) :-
 % Identifica o tipo do jogador atual (humano ou computador) e chama o predicado apropriado para realizar o turno.
 play_next_turn(GameState, NewGameState) :-
     GameState = game_state(_, CurrentPlayer, Config),
+    check_bot_vs_bot_pause(Config),
     determine_player_type(Config, CurrentPlayer, PlayerType),
     play_turn(GameState, PlayerType, NewGameState).
+
+% Pausa o jogo se estiver no modo computador - computador, 
+check_bot_vs_bot_pause(Config) :-
+    is_bot_vs_bot(Config),
+    !,  
+    bot_vs_bot_pause.
+check_bot_vs_bot_pause(_).
+
+% Verifica se o jogo está no modo computador - computador
+is_bot_vs_bot(config(_, [computer(_), computer(_)], _)).
+
+% Pausa para continuar/sair durante jogo de computador - computador
+bot_vs_bot_pause :-
+    nl,
+    write('Prima "s" para continuar para a próxima jogada, ou qualquer outra tecla para sair.'), nl,
+    read(s).
+
 
 % Determinar o tipo do jogador com base no jogador atual
 % Compara o jogador atual (red ou blue) com a configuração para determinar se o jogador é humano ou computador.
