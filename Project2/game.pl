@@ -227,7 +227,12 @@ is_bot_vs_bot(config(_, [computer(_), computer(_)], _)).
 bot_vs_bot_pause :-
     nl,
     write('Prima "s" para continuar para a próxima jogada, ou qualquer outra tecla para sair.'), nl,
-    read(s).
+    read(Input),
+    bot_vs_bot_action(Input).
+
+% Se for s, continua; caso contrário, volta ao início
+bot_vs_bot_action(s) :- !. 
+bot_vs_bot_action(_) :- play.  
 
 
 % Determinar o tipo do jogador com base no jogador atual
