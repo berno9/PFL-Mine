@@ -195,7 +195,7 @@ Example representations:
 
 - Initial State:
 ```prolog
-Copiar código
+
 game_state(
   [[red(1), blue(1)], [blue(1), red(1)]],  % 2x2 board
   red,
@@ -240,7 +240,7 @@ During gameplay:
 
 Example user interaction for moves:
 ```prolog
-Copiar código
+
 write('Enter source row: '), read(SRow),
 write('Enter source column: '), read(SCol),
 write('Enter target row: '), read(TRow),
@@ -250,7 +250,7 @@ Move = move(SRow, SCol, TRow, TCol).
 
 Input errors (e.g., out-of-bounds moves) prompt retry:
 ```prolog
-Copiar código
+
 interactive_move(GameState, NewGameState) :-
     get_move_inputs(GameState, move(SRow, SCol, TRow, TCol)),
     move(GameState, move(SRow, SCol, TRow, TCol), NewGameState).
@@ -273,4 +273,18 @@ This design balances flexibility and modularity, making it easy to extend or mod
 
 With all these enhancements, Anaash could evolve into an engaging and polished game for a broader audience.
 
+## Bibliography
 
+The following resources were used during the development of this assignment:
+
+1. **Anaash Official Rulebook**  
+   - Source: [https://www.marksteeregames.com/Anaash_rules.pdf](https://www.marksteeregames.com/Anaash_rules.pdf)  
+   - Description: Official rulebook for the Anaash game, providing detailed information about the game's rules, setup, and move mechanics.
+
+2. **SICStus Prolog Documentation**  
+   - Source: [https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/Writing-Efficient-Programs.html](https://sicstus.sics.se/sicstus/docs/latest4/html/sicstus.html/Writing-Efficient-Programs.html)  
+   - Description: Official documentation for SICStus Prolog, covering installation, usage, and best practices for writing efficient Prolog programs.
+
+3. **AI and Prolog Game Strategies**  
+   - Source: [https://arxiv.org/pdf/0911.2899](https://arxiv.org/pdf/0911.2899)  
+   - Description: Research paper on AI techniques for turn-based games, focusing on heuristic evaluations and game tree exploration in declarative languages like Prolog.
