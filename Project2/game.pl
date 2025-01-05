@@ -226,7 +226,7 @@ is_bot_vs_bot(config(_, [computer(_), computer(_)], _)).
 % Pausa para continuar/sair durante jogo de computador - computador
 bot_vs_bot_pause :-
     nl,
-    write('Prima "s" para continuar para a próxima jogada, ou qualquer outra tecla para sair.'), nl,
+    write('Prima "s" para continuar para a proxima jogada, ou qualquer outra tecla para sair.'), nl,
     read(Input),
     bot_vs_bot_action(Input).
 
