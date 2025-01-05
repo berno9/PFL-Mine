@@ -7,7 +7,7 @@
 
 ### Group Members
 1. **Lara Inês Alves Cunha**  
-   - **Student Number**: [Insert Number]  
+   - **Student Number**: up202108876  
    - **Contribution**: 50%  
      - **Tasks Performed**:  
        - Implementation of the `initial_state/2` predicate for initializing the game state.
@@ -16,7 +16,7 @@
        - Auxiliary predicates for game initialization and visualization.
 
 2. **Bernardo Marques Soares da Costa**  
-   - **Student Number**: [Insert Number]  
+   - **Student Number**: up202207579  
    - **Contribution**: 50%  
      - **Tasks Performed**:  
        - Implementation of the `move/3` predicate to validate and execute game moves.
